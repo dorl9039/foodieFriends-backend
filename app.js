@@ -1,7 +1,8 @@
 const express = require('express');
 const app = express();
 const cors = require('cors');
-const wishesRouter = require('./routes/wishes')
+const wishRouter = require('./routes/wishRoutes');
+const userRouter = require('./routes/userRoutes');
 
 
 
@@ -10,10 +11,11 @@ app.use(express.json());
 
 
 // Set the routes
-app.use('/', wishesRouter);
+app.use('/', wishRouter);
+app.use('/', userRouter);
 
 app.use((req, res) => {
-    res.status(404).send("Not Found")
+    res.status(404).send("Not Found");
 })
 
 const port = 5000;
