@@ -5,14 +5,13 @@ const wishRouter = require('./routes/wishRoutes');
 const userRouter = require('./routes/userRoutes');
 
 
-
 app.use(cors());
 app.use(express.json());
 
 
 // Set the routes
-app.use('/', wishRouter);
-app.use('/', userRouter);
+app.use('/wishes', wishRouter);
+app.use('/users', userRouter);
 
 app.use((req, res) => {
     res.status(404).send("Not Found");

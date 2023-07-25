@@ -3,8 +3,8 @@ const router = express.Router();
 
 const wishController = require('../controllers/wishController');
 
-router.get('/wishes/:wishId', wishController.getWish);
-router.patch('/wishes/:wishId', wishController.editWish);
-router.delete('/wishes/:wishId', wishController.deleteWish);
+router.get('/:wishId', wishController.getWish);
+router.patch('/:wishId', wishController.editWish);
+router.delete('/:wishId', wishController.deleteWish);
 
 module.exports = router;
