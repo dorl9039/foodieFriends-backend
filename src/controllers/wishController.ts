@@ -1,7 +1,8 @@
-const pool = require('../db');
+import express, { Request, Response } from 'express';
+import pool from '../db';
 
 // Get a wish
-exports.getWish = async (req, res) => {
+export const getWish = async (req: Request, res: Response) => {
     try {
         const wishId = req.params.wishId
 
@@ -17,7 +18,7 @@ exports.getWish = async (req, res) => {
     }
 };
 
-exports.editWish = async (req, res) => {
+export const editWish = async (req: Request, res: Response) => {
     try {
         const wishId = req.params.wishId;
         const { wish_comment, wish_priority } = req.body;
@@ -48,7 +49,7 @@ exports.editWish = async (req, res) => {
 };
 
 
-exports.deleteWish = async (req, res) => {
+export const deleteWish = async (req: Request, res: Response) => {
     try {
         const wishId = req.params.wishId;
         const query = 'DELETE FROM wish WHERE wish_id = $1';

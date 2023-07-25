@@ -1,7 +1,8 @@
-const pool = require('../db');
+import express, { Request, Response } from 'express';
+import pool from '../db';
 
 // Display list of wishes for a user
-exports.getWishlist = async (req, res) => {
+export const getWishlist = async (req: Request, res: Response) => {
     // Remember to validate user here
     try {
         const userId = req.params.userId;
@@ -18,7 +19,7 @@ exports.getWishlist = async (req, res) => {
 };
 
 // Add a wish to wishlist
-exports.addWish = async (req, res) => {
+export const addWish = async (req: Request, res: Response) => {
     try {
         const data = req.body;
         const userId = req.params.userId;
