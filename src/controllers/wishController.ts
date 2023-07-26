@@ -6,16 +6,21 @@ import { validateRecord } from '../routeHelpers';
 export const getWish = async (req: Request, res: Response) => {
     try {
         const wishId = req.params.wishId
-        const checkWishId = await validateRecord("wish", "wish_id", wishId);
-        if (!checkWishId.isValid) {
-            res.status(checkWishId.status).json(`message: ${checkWishId.message}`);
+        if (!Number(wishId)) {
+            res.status(400).json(`message: id ${wishId} is invalid`);
+            return;
         };
 
         const query = 'SELECT * FROM wish WHERE wish_id = $1';
         const values = [wishId];
         const result = await pool.query(query, values);
+        
+        if (result.rows.length < 1) {
+            res.status(404).json(`message: Wish with id ${wishId} was not found`);
+            return;
+        };
+        
         const wish = result.rows[0];
-
         res.status(200).json(wish);
 
     } catch (err) {
@@ -30,6 +35,7 @@ export const editWish = async (req: Request, res: Response) => {
         const checkWishId = await validateRecord("wish", "wish_id", wishId);
         if (!checkWishId.isValid) {
             res.status(checkWishId.status).json(`message: ${checkWishId.message}`);
+            return;
         };
 
         const { wish_comment, wish_priority } = req.body;
@@ -66,6 +72,7 @@ export const deleteWish = async (req: Request, res: Response) => {
         const checkWishId = await validateRecord("wish", "wish_id", wishId);
         if (!checkWishId.isValid) {
             res.status(checkWishId.status).json(`message: ${checkWishId.message}`);
+            return;
         };
         
         const query = 'DELETE FROM wish WHERE wish_id = $1';

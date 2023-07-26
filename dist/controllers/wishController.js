@@ -19,14 +19,19 @@ const routeHelpers_1 = require("../routeHelpers");
 const getWish = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const wishId = req.params.wishId;
-        const checkWishId = yield (0, routeHelpers_1.validateRecord)("wish", "wish_id", wishId);
-        if (!checkWishId.isValid) {
-            res.status(checkWishId.status).json(`message: ${checkWishId.message}`);
+        if (!Number(wishId)) {
+            res.status(400).json(`message: id ${wishId} is invalid`);
+            return;
         }
         ;
         const query = 'SELECT * FROM wish WHERE wish_id = $1';
         const values = [wishId];
         const result = yield db_1.default.query(query, values);
+        if (result.rows.length < 1) {
+            res.status(404).json(`message: Wish with id ${wishId} was not found`);
+            return;
+        }
+        ;
         const wish = result.rows[0];
         res.status(200).json(wish);
     }
@@ -35,12 +40,14 @@ const getWish = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     }
 });
 exports.getWish = getWish;
+// Update a wish
 const editWish = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const wishId = req.params.wishId;
         const checkWishId = yield (0, routeHelpers_1.validateRecord)("wish", "wish_id", wishId);
         if (!checkWishId.isValid) {
             res.status(checkWishId.status).json(`message: ${checkWishId.message}`);
+            return;
         }
         ;
         const { wish_comment, wish_priority } = req.body;
@@ -67,12 +74,14 @@ const editWish = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     }
 });
 exports.editWish = editWish;
+// Delete a wish
 const deleteWish = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const wishId = req.params.wishId;
         const checkWishId = yield (0, routeHelpers_1.validateRecord)("wish", "wish_id", wishId);
         if (!checkWishId.isValid) {
             res.status(checkWishId.status).json(`message: ${checkWishId.message}`);
+            return;
         }
         ;
         const query = 'DELETE FROM wish WHERE wish_id = $1';
