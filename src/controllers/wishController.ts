@@ -1,10 +1,15 @@
 import express, { Request, Response } from 'express';
 import pool from '../db';
+import { validateRecord } from '../routeHelpers';
 
 // Get a wish
 export const getWish = async (req: Request, res: Response) => {
     try {
         const wishId = req.params.wishId
+        const checkWishId = await validateRecord("wish", "wish_id", wishId);
+        if (!checkWishId.isValid) {
+            res.status(checkWishId.status).json(`message: ${checkWishId.message}`);
+        };
 
         const query = 'SELECT * FROM wish WHERE wish_id = $1';
         const values = [wishId];
@@ -21,6 +26,11 @@ export const getWish = async (req: Request, res: Response) => {
 export const editWish = async (req: Request, res: Response) => {
     try {
         const wishId = req.params.wishId;
+        const checkWishId = await validateRecord("wish", "wish_id", wishId);
+        if (!checkWishId.isValid) {
+            res.status(checkWishId.status).json(`message: ${checkWishId.message}`);
+        };
+
         const { wish_comment, wish_priority } = req.body;
         let query = 'UPDATE wish SET ';
         const values = [];
@@ -52,6 +62,11 @@ export const editWish = async (req: Request, res: Response) => {
 export const deleteWish = async (req: Request, res: Response) => {
     try {
         const wishId = req.params.wishId;
+        const checkWishId = await validateRecord("wish", "wish_id", wishId);
+        if (!checkWishId.isValid) {
+            res.status(checkWishId.status).json(`message: ${checkWishId.message}`);
+        };
+        
         const query = 'DELETE FROM wish WHERE wish_id = $1';
         const values = [wishId];
         await pool.query(query, values);

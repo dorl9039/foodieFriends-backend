@@ -4,13 +4,12 @@ import { validateRecord } from '../routeHelpers';
 
 // Display list of wishes for a user
 export const getWishlist = async (req: Request, res: Response) => {
-    // Remember to validate user here
     try {
         const userId = req.params.userId;
         
         const checkUserId = await validateRecord("app_user", "user_id", userId)
         if (!checkUserId.isValid) {
-            res.status(checkUserId.status).json(`message: ${checkUserId.message}`)
+            res.status(checkUserId.status).json(`message: ${checkUserId.message}`);
         }
 
         const query = 'SELECT * FROM wish WHERE user_id = $1';

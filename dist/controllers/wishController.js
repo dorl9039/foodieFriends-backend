@@ -14,10 +14,16 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.deleteWish = exports.editWish = exports.getWish = void 0;
 const db_1 = __importDefault(require("../db"));
+const routeHelpers_1 = require("../routeHelpers");
 // Get a wish
 const getWish = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const wishId = req.params.wishId;
+        const checkWishId = yield (0, routeHelpers_1.validateRecord)("wish", "wish_id", wishId);
+        if (!checkWishId.isValid) {
+            res.status(checkWishId.status).json(`message: ${checkWishId.message}`);
+        }
+        ;
         const query = 'SELECT * FROM wish WHERE wish_id = $1';
         const values = [wishId];
         const result = yield db_1.default.query(query, values);
@@ -32,6 +38,11 @@ exports.getWish = getWish;
 const editWish = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const wishId = req.params.wishId;
+        const checkWishId = yield (0, routeHelpers_1.validateRecord)("wish", "wish_id", wishId);
+        if (!checkWishId.isValid) {
+            res.status(checkWishId.status).json(`message: ${checkWishId.message}`);
+        }
+        ;
         const { wish_comment, wish_priority } = req.body;
         let query = 'UPDATE wish SET ';
         const values = [];
@@ -59,6 +70,11 @@ exports.editWish = editWish;
 const deleteWish = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const wishId = req.params.wishId;
+        const checkWishId = yield (0, routeHelpers_1.validateRecord)("wish", "wish_id", wishId);
+        if (!checkWishId.isValid) {
+            res.status(checkWishId.status).json(`message: ${checkWishId.message}`);
+        }
+        ;
         const query = 'DELETE FROM wish WHERE wish_id = $1';
         const values = [wishId];
         yield db_1.default.query(query, values);

@@ -17,7 +17,6 @@ const db_1 = __importDefault(require("../db"));
 const routeHelpers_1 = require("../routeHelpers");
 // Display list of wishes for a user
 const getWishlist = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    // Remember to validate user here
     try {
         const userId = req.params.userId;
         const checkUserId = yield (0, routeHelpers_1.validateRecord)("app_user", "user_id", userId);
