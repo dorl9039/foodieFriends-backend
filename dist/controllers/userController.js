@@ -14,11 +14,15 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.addWish = exports.getWishlist = void 0;
 const db_1 = __importDefault(require("../db"));
+const routeHelpers_1 = require("../routeHelpers");
 // Display list of wishes for a user
 const getWishlist = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    // Remember to validate user here
     try {
         const userId = req.params.userId;
+        const checkUserId = yield (0, routeHelpers_1.validateRecord)("app_user", "user_id", userId);
+        if (!checkUserId.isValid) {
+            res.status(checkUserId.status).json(`message: ${checkUserId.message}`);
+        }
         const query = 'SELECT * FROM wish WHERE user_id = $1';
         const values = [userId];
         const result = yield db_1.default.query(query, values);
@@ -36,6 +40,16 @@ const addWish = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         const data = req.body;
         const userId = req.params.userId;
         const restaurantId = req.params.restaurantId;
+        const checkUserId = yield (0, routeHelpers_1.validateRecord)("app_user", "user_id", userId);
+        const checkRestaurantId = yield (0, routeHelpers_1.validateRecord)("restaurant", "restaurant_id", restaurantId);
+        for (const check of [checkUserId, checkRestaurantId]) {
+            if (!check.isValid) {
+                res.status(check.status).json(`message: ${check.message}`);
+                return;
+            }
+            ;
+        }
+        ;
         const query = 'INSERT INTO wish (user_id, restaurant_id, wish_comment, wish_priority) VALUES($1, $2, $3, $4) RETURNING *';
         const values = [userId, restaurantId, data.wish_comment, data.wish_priority];
         const result = yield db_1.default.query(query, values);
