@@ -23,6 +23,7 @@ export const getWish = async (req: Request, res: Response) => {
     }
 };
 
+// Update a wish
 export const editWish = async (req: Request, res: Response) => {
     try {
         const wishId = req.params.wishId;
@@ -58,7 +59,7 @@ export const editWish = async (req: Request, res: Response) => {
     }
 };
 
-
+// Delete a wish
 export const deleteWish = async (req: Request, res: Response) => {
     try {
         const wishId = req.params.wishId;
@@ -76,4 +77,4 @@ export const deleteWish = async (req: Request, res: Response) => {
     } catch (err) {
         console.error(err.message);
     }
-}
+};
