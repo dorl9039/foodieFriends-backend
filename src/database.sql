@@ -11,13 +11,14 @@ CREATE TABLE app_user(
 );
 
 CREATE TABLE restaurant(
-    restaurant_id SERIAL PRIMARY KEY,
+    restaurant_id TEXT PRIMARY KEY,
     restaurant_name TEXT,
     address_line1 TEXT,
-    address_line2 TEXT,
     address_city TEXT,
     address_state TEXT,
     address_country TEXT,
+    longitude DOUBLE PRECISION,
+    latitude DOUBLE PRECISION,
     cuisine TEXT,
     price_range VARCHAR(8)
 );
