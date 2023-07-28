@@ -3,8 +3,9 @@ import pool from '../db';
 
 export const getRestaurant = async (req: Request, res: Response) => {
     try {
-        const restaurantId = req.params.restauranId;
+        const restaurantId = req.params.restaurantId;
         const result = await pool.query(`SELECT * FROM restaurant WHERE restaurant_id = $1`, [restaurantId]);
+        console.log(result.rows)
         if (result.rows.length < 1) {
             res.status(404).json(`message: Restaurant with id ${restaurantId} was not found`);
             return;

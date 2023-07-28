@@ -27,4 +27,5 @@ const express_1 = require("express");
 const restaurantController = __importStar(require("../controllers/restaurantController"));
 const router = (0, express_1.Router)();
 router.post('', restaurantController.addRestaurant);
+router.get('/:restaurantId', restaurantController.getRestaurant);
 exports.default = router;

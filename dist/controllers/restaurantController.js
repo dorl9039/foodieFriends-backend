@@ -12,55 +12,39 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.addRestaurant = exports.getRestaurantData = void 0;
+exports.addRestaurant = exports.getRestaurant = void 0;
 const db_1 = __importDefault(require("../db"));
-require("dotenv/config");
-const axios_1 = __importDefault(require("axios"));
-;
-// Mapbox API call to get restaurant name and address
-// API call to Yelp (plugging in restaurant name and address) to get Yelp id
-const getRestaurantData = (data) => __awaiter(void 0, void 0, void 0, function* () {
-    const yelpMatchUrl = 'https://api.yelp.com/v3/businesses/matches';
-    const yelpByIdUrl = 'https://api.yelp.com/v3/businesses';
-    const headers = {
-        'Authorization': `Bearer ${process.env.YELP_API_TOKEN}`,
-        'accept': 'application/json'
-    };
-    const matchParams = {
-        name: data.restaurantName,
-        address1: data.address1,
-        city: data.city,
-        state: data.state,
-        country: data.country,
-    };
+const getRestaurant = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const matchResponse = yield axios_1.default.get(yelpMatchUrl, { headers, params: matchParams });
-        const restaurantId = matchResponse.data.businesses[0].id;
-        const byIdResponse = yield axios_1.default.get(`${yelpByIdUrl}/${restaurantId}`, { headers });
-        const categories = byIdResponse.data.categories.map(obj => obj.title);
-        const cuisine = categories.join(', ');
-        const restaurantData = Object.assign(Object.assign({ id: matchResponse.data.businesses[0].id }, matchParams), { longitude: matchResponse.data.businesses[0].coordinates.longitude, latitude: matchResponse.data.businesses[0].coordinates.latitude, cuisine: cuisine, priceRange: byIdResponse.data.price });
-        return restaurantData;
+        const restaurantId = req.params.restaurantId;
+        console.log(restaurantId);
+        const result = yield db_1.default.query(`SELECT * FROM restaurant WHERE restaurant_id = $1`, [restaurantId]);
+        console.log(result.rows);
+        if (result.rows.length < 1) {
+            res.status(404).json(`message: Restaurant with id ${restaurantId} was not found`);
+            return;
+        }
+        const restaurant = result.rows[0];
+        res.status(200).json(restaurant);
     }
     catch (err) {
-        console.error('Error in findRestaurant', err);
+        console.error("Error in getting restaurant:", err.message);
     }
+    ;
 });
-exports.getRestaurantData = getRestaurantData;
-// Check if Yelp restaurant id is already in db
+exports.getRestaurant = getRestaurant;
+// Add Yelp restaurant to db if it's not already in there
 const addRestaurant = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const data = req.body;
     const result = yield db_1.default.query(`SELECT * FROM restaurant WHERE restaurant_id = $1`, [data.id]);
     const isValid = result.rows.length < 1 ? false : true;
-    console.log(isValid);
     // add to db if restaurant not already present
     if (!isValid) {
         try {
-            console.log("in the try for some reason");
             const query = 'INSERT INTO restaurant(restaurant_id, restaurant_name, address_line1, address_city, address_state, address_country, longitude, latitude, cuisine, price_range) VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)';
             const values = Object.values(data);
-            const newRestaurant = yield db_1.default.query(query, values);
-            res.status(201).json(data.id);
+            yield db_1.default.query(query, values);
+            res.status(201).json(`restaurant_id: ${data.id}`);
         }
         catch (err) {
             console.error('Error adding restaurant to table', err);
@@ -68,18 +52,8 @@ const addRestaurant = (req, res) => __awaiter(void 0, void 0, void 0, function* 
         ;
     }
     else {
-        res.status(200).json(data.id);
+        res.status(200).json(`restaurant_id: ${data.id}`);
     }
+    ;
 });
 exports.addRestaurant = addRestaurant;
-const data = {
-    restaurantName: 'Cloud & Spirits',
-    address1: '795 Main St',
-    city: 'Cambridge',
-    state: 'MA',
-    country: 'US',
-};
-(0, exports.getRestaurantData)(data).then(res => {
-    const newData = res;
-    console.log(newData);
-});
