@@ -1,36 +1,40 @@
-import express, { Request, Response } from 'express';
+import { Request, Response } from 'express';
 import pool from '../db';
-import { validateRecord } from '../routeHelpers';
-import 'dotenv/config';
-console.log(process.env.YELP_API_KEY)
-import axios, { AxiosResponse } from 'axios';
 
-// Mapbox API call to get restaurant name and address
-
-
-// API call to Yelp (plugging in restaurant name and address) to get Yelp id
-export const findRestaurant = async (rest_name: string, address1: string, city: string, state: string, country: string) => {
-    const yelpUrl = 'https://api.yelp.com/v3/businesses/matches';
-    const headers = {
-        'Authorization': `Bearer ${process.env.YELP_API_TOKEN}`,
-        'accept': 'application/json'
-    };
-    const params = {
-        name: rest_name,
-        address1,
-        city,
-        state,
-        country,
-    };
-
+export const getRestaurant = async (req: Request, res: Response) => {
     try {
-        const response: AxiosResponse = await axios.get(yelpUrl, { headers, params });
-        return response.data.businesses[0].id;
+        const restaurantId = req.params.restauranId;
+        const result = await pool.query(`SELECT * FROM restaurant WHERE restaurant_id = $1`, [restaurantId]);
+        if (result.rows.length < 1) {
+            res.status(404).json(`message: Restaurant with id ${restaurantId} was not found`);
+            return;
+        }
+        const restaurant = result.rows[0];
+        res.status(200).json(restaurant);
     } catch (err) {
-        console.error('Error in findRestaurant', err)
-    }
+        console.error("Error in getting restaurant:", err.message)
+    };
 };
 
-// Check if Yelp restaurant id is already in db
+// Add Yelp restaurant to db if it's not already in there
+export const addRestaurant = async (req: Request, res: Response) => {
+    const data = req.body
+    const result = await pool.query(`SELECT * FROM restaurant WHERE restaurant_id = $1`, [data.id]);
+    const isValid = result.rows.length < 1 ? false: true;
 
-// Add restaurant to db
+    // add to db if restaurant not already present
+    if (!isValid) {
+        try {
+            const query = 'INSERT INTO restaurant(restaurant_id, restaurant_name, address_line1, address_city, address_state, address_country, longitude, latitude, cuisine, price_range) VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)'
+            const values = Object.values(data)
+            await pool.query(query, values);
+
+            res.status(201).json(`restaurant_id: ${data.id}`)
+
+        } catch (err) {
+            console.error('Error adding restaurant to table', err);
+        };
+    } else {    
+        res.status(200).json(`restaurant_id: ${data.id}`)
+    };
+};

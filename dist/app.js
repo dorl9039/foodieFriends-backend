@@ -7,19 +7,14 @@ const express_1 = __importDefault(require("express"));
 const cors_1 = __importDefault(require("cors"));
 const wishRoutes_1 = __importDefault(require("./routes/wishRoutes"));
 const userRoutes_1 = __importDefault(require("./routes/userRoutes"));
-const restaurantController_1 = require("./controllers/restaurantController");
+const restaurantRoutes_1 = __importDefault(require("./routes/restaurantRoutes"));
 const app = (0, express_1.default)();
-const rest_name = 'Cloud & Spirits';
-const address1 = '795 Main St';
-const city = 'Cambridge';
-const state = 'MA';
-const country = 'US';
-(0, restaurantController_1.findRestaurant)(rest_name, address1, city, state, country).then(data => console.log(data));
 app.use((0, cors_1.default)());
 app.use(express_1.default.json());
 // Set the routes
 app.use('/wishes', wishRoutes_1.default);
 app.use('/users', userRoutes_1.default);
+app.use('/restaurants', restaurantRoutes_1.default);
 app.use((req, res) => {
     res.status(404).send("Not Found");
 });
