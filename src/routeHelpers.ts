@@ -18,17 +18,17 @@ export const validateRecord = async (table: string, idType: string, id: string) 
 
 // External API calls
 
-interface restaurantData {
+export interface restaurantData {
     id?: string,
     restaurantName: string, 
     address1: string, 
     city: string, 
     state: string, 
     country: string,
-    longitude?: number,
-    latitude?: number,
+    longitude: number,
+    latitude: number,
     cuisine?: string,
-    priceRange?: string,
+    priceRange?: string
 };
 
 // Mapbox API call to get restaurant name and address
@@ -47,7 +47,7 @@ export const getYelpData = async (data: restaurantData) => {
         address1: data.address1,
         city: data.city,
         state: data.state,
-        country: data.country,
+        country: data.country
     };
 
     try {
@@ -60,9 +60,7 @@ export const getYelpData = async (data: restaurantData) => {
 
         const restaurantData = {
             id: matchResponse.data.businesses[0].id,
-            ...matchParams,
-            longitude: matchResponse.data.businesses[0].coordinates.longitude,
-            latitude: matchResponse.data.businesses[0].coordinates.latitude,
+            ...data,
             cuisine: cuisine,
             priceRange: byIdResponse.data.price
         };
@@ -73,15 +71,38 @@ export const getYelpData = async (data: restaurantData) => {
     };
 };
 
+// Add Yelp restaurant to db if it's not already in there
+export const addRestaurant = async (restaurantData:restaurantData) => {
+    const result = await pool.query(`SELECT * FROM restaurant WHERE restaurant_id = $1`, [restaurantData.id]);
+    const isValid = result.rows.length < 1 ? false: true;
+
+    if (!isValid) {
+        const query = 'INSERT INTO restaurant(restaurant_id, restaurant_name, address_line1, address_city, address_state, address_country, longitude, latitude, cuisine, price_range) VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)';
+        const values = Object.values(restaurantData);
+        await pool.query(query, values);
+    }
+    // console.log(restaurantData.id)
+    return restaurantData.id;
+};
+
+
 // const data = {
-//     restaurantName :'Cloud & Spirits',
-//     address1: '795 Main St',
-//     city: 'Cambridge',
-//     state :'MA',
+//     restaurantName :'Noreetuh',
+//     address1: '128 1st Ave',
+//     city: 'New York City',
+//     state :'NY',
 //     country: 'US',
+//     latitude: 40.727276,
+//     longitude: -73.985149,
 // }
 
-// getYelpData(data).then( res => {
-//    const newData = res;
-//    console.log(newData)
-// })
+// let restaurantId: string;
+
+// const restData = await getYelpData(data)
+// const restId = await addRestaurant(restData)
+
+// console.log(testPost(data))
+
+
+
+

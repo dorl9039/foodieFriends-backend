@@ -1,6 +1,7 @@
 import express, { Request, Response } from 'express';
 import pool from '../db';
-import { validateRecord } from '../routeHelpers';
+import { validateRecord, getYelpData, addRestaurant } from '../routeHelpers';
+
 
 // Display list of wishes for a user
 export const getWishlist = async (req: Request, res: Response) => {
@@ -25,21 +26,25 @@ export const getWishlist = async (req: Request, res: Response) => {
 };
 
 // Add a wish to wishlist
+// req will be retrieval from MapGL (object with name, address, lng, lat, wish_comment, wish_priority)
+// Make Yelp API call for ID and price/cuisine
+// Make restaurant DB call for GET or POST
+// add wish to wishlist
 export const addWish = async (req: Request, res: Response) => {
     try {
         const data = req.body;
         const userId = req.params.userId;
-        const restaurantId = req.params.restaurantId;
-
+        console.log(data, userId)
+        // Check that the userId is valid
         const checkUserId = await validateRecord("app_user", "user_id", userId);
-        const checkRestaurantId = await validateRecord("restaurant", "restaurant_id", restaurantId);
-
-        for (const check of [checkUserId, checkRestaurantId]) {
-            if (!check.isValid) {
-                res.status(check.status).json(`message: ${check.message}`);
-                return;
-            };
+        if (!checkUserId.isValid) {
+            res.status(checkUserId.status).json(`message: ${checkUserId.message}`);
+            return;
         };
+        // Make Yelp API call for additional restaurant info
+        const restaurantData = await getYelpData(data)
+        // Add restaurant to db if it's not there
+        const restaurantId = await addRestaurant(restaurantData)
 
         const query = 'INSERT INTO wish (user_id, restaurant_id, wish_comment, wish_priority) VALUES($1, $2, $3, $4) RETURNING *';
         const values = [userId, restaurantId, data.wish_comment, data.wish_priority];
