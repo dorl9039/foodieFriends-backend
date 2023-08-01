@@ -5,5 +5,6 @@ const router = Router();
 
 router.get('/:userId/wishlist', userController.getWishlist);
 router.post('/:userId/wishlist', userController.addWish);
+router.get('/:userId/history', userController.getHistory)
 
 export default router;

@@ -56,3 +56,32 @@ export const addWish = async (req: Request, res: Response) => {
         console.error("Error creating new wish:", err.message);
     }
 };
+
+export const getHistory = async (req: Request, res: Response) => {
+    try {
+        const userId = req.params.userId;
+        
+        const checkUserId = await validateRecord("app_user", "user_id", userId)
+        if (!checkUserId.isValid) {
+            res.status(checkUserId.status).json(`message: ${checkUserId.message}`);
+        }
+        // get list of attendee records
+        const query = 'SELECT v.visit_id, v.restaurant_id, v.restaurant_name, v.visit_date, a.user_id, a.visit_comment FROM attendee AS a JOIN visit AS v ON v.visit_id = a.visit_id WHERE a.user_id = $1;';
+        const values = [userId];
+        const result = await pool.query(query, values);
+        const records = result.rows;
+        
+        const history = []
+        for (const record of records) {
+            const query = 'SELECT u.username FROM attendee AS a JOIN app_user AS u ON a.user_id = u.user_id JOIN visit AS v ON v.visit_id = a.visit_id WHERE v.visit_id = $1;'
+            const values = [record.visit_id]
+            const result = await pool.query(query, values)
+            const attendees = result.rows;
+            history.push({...record, attendees})
+        }
+        res.status(200).json(history);
+
+    } catch (err) {
+        console.error('Error fetching user history', err.message);
+    }
+};
