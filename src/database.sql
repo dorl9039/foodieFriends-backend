@@ -32,15 +32,18 @@ create TABLE wish(
     wish_priority INT
 );
 
-CREATE TABLE visit_attendee(
+CREATE TABLE attendee(
     user_id INT,
+    username TEXT,
     visit_id INT,
+    restaurant_id TEXT,
+    visit_date TIMESTAMP,
     visit_comment TEXT
 );
 
 CREATE TABLE visit (
     visit_id SERIAL PRIMARY KEY,
-    restaurant_id INT,
+    restaurant_id TEXT,
     visit_date TIMESTAMP
 );
 
