@@ -10,6 +10,8 @@ CREATE TABLE app_user(
     creation_date DATE DEFAULT CURRENT_DATE
 );
 
+INSERT INTO app_user (username, first_name) VALUES ('user2', 'muji');
+
 CREATE TABLE restaurant(
     restaurant_id TEXT PRIMARY KEY,
     restaurant_name TEXT,
@@ -34,18 +36,28 @@ create TABLE wish(
 
 CREATE TABLE attendee(
     user_id INT,
-    username TEXT,
     visit_id INT,
-    restaurant_id TEXT,
-    visit_date TIMESTAMP,
     visit_comment TEXT
 );
+
+INSERT INTO attendee (user_id, visit_id, visit_comment) VALUES (1, 1, 'test gethistory')
+INSERT INTO attendee (user_id, visit_id, visit_comment) VALUES (1, 2, 'cloud & spirits visit')
+INSERT INTO attendee (user_id, visit_id, visit_comment) VALUES (2, 1, 'user2 visit to Noreetuh')
+
 
 CREATE TABLE visit (
     visit_id SERIAL PRIMARY KEY,
     restaurant_id TEXT,
+    restaurant_name TEXT,
     visit_date TIMESTAMP
 );
+
+INSERT INTO visit (restaurant_id, restaurant_name, visit_date) VALUES ('rCpO-kMHljieU0geK0RJQw', 'Noreetuh', '2023-08-01');
+INSERT INTO visit (restaurant_id, restaurant_name, visit_date) VALUES ('rCpO-y4Kebbseem1lPjzG2BKwgg', 'Cloud & Spirits', '2023-07-31');
+
+SELECT v.visit_id, v.restaurant_id, v.restaurant_name, v.visit_date, a.user_id, a.visit_comment FROM attendee as a JOIN visit as v ON v.visit_id = a.visit_id WHERE a.user_id = 1;
+
+SELECT u.username FROM attendee as a JOIN app_user as u ON a.user_id = u.user_id JOIN visit as v ON v.visit_id = a.visit_id WHERE v.visit_id = 1;
 
 CREATE TABLE friend(
     friend1_id INT,
