@@ -27,6 +27,7 @@ create TABLE wish(
     wish_id SERIAL PRIMARY KEY,
     user_id INT,
     restaurant_id TEXT,
+    restaurant_name TEXT,
     wish_comment TEXT,
     wish_priority INT
 );
