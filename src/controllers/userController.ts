@@ -47,7 +47,6 @@ export const addWish = async (req: Request, res: Response) => {
         // Create new wish
         const query = 'INSERT INTO wish (user_id, restaurant_id, restaurant_name, wish_comment, wish_priority) VALUES($1, $2, $3, $4, $5) RETURNING *';
         const values = [userId, restaurantId, restaurantData.restaurantName, wishData.wish_comment, wishData.wish_priority];
-        console.log("backend, values", values)
         const result = await pool.query(query, values);
         const newWish = result.rows[0];
 

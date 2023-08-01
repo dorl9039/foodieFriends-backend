@@ -54,12 +54,12 @@ export const editWish = async (req: Request, res: Response) => {
             values.push(wish_priority);
         }
 
-        query += ` WHERE wish_id = $${values.length + 1}`;
+        query += ` WHERE wish_id = $${values.length + 1} RETURNING *`;
         values.push(wishId);
+        const result = await pool.query(query, values);
+        const updatedWish = result.rows[0]
+        res.status(200).json(updatedWish);
 
-        await pool.query(query, values);
-
-        res.status(200).json(`Wish ${wishId} successfully updated`);
     } catch (err) {
         console.error(err.message);
     }
