@@ -113,3 +113,29 @@ export const getVisit = async (req: Request, res: Response) => {
         console.error('Error fetching user history', err.message);
     }
 };
+
+export const deleteVisit = async (req: Request, res: Response) => {
+    try {
+        const userId = req.params.userId;
+        // Validate userId exists
+        const checkUserId = await validateRecord("app_user", "user_id", userId)
+        if (!checkUserId.isValid) {
+            res.status(checkUserId.status).json(`message: ${checkUserId.message}`);
+        }
+
+        const visitId = req.params.visitId
+        // Validate visitId exists
+        const checkVisitId = await validateRecord("attendee", "visit_id", visitId)
+        if (!checkUserId.isValid) {
+            res.status(checkUserId.status).json(`message: ${checkUserId.message}`);
+        }
+        const query = 'DELETE FROM attendee WHERE user_id = $1 AND visit_id = $2;';
+        const values = [userId, visitId];
+        await pool.query(query, values);
+
+        res.status(200).json(`Visit ${visitId} successfully deleted`);
+
+    } catch (err) {
+        console.error('Error fetching user history', err.message);
+    }
+}
