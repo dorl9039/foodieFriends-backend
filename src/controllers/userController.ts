@@ -57,6 +57,8 @@ export const addWish = async (req: Request, res: Response) => {
     }
 };
 
+
+// Get user's history of visits
 export const getHistory = async (req: Request, res: Response) => {
     try {
         const userId = req.params.userId;
@@ -83,6 +85,8 @@ export const getHistory = async (req: Request, res: Response) => {
     }
 };
 
+
+// Get a specific visit record from a user's history
 export const getVisit = async (req: Request, res: Response) => {
     try {
         const userId = req.params.userId;
@@ -114,6 +118,8 @@ export const getVisit = async (req: Request, res: Response) => {
     }
 };
 
+
+// Delete a specific visit from a user's history
 export const deleteVisit = async (req: Request, res: Response) => {
     try {
         const userId = req.params.userId;

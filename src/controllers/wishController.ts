@@ -85,3 +85,17 @@ export const deleteWish = async (req: Request, res: Response) => {
         console.error(err.message);
     }
 };
+
+//Get all wishes in db
+export const getAllWishes = async (req: Request, res: Response) => {
+    try {
+        const query = 'SELECT * FROM wish';
+        const result = await pool.query(query);
+        
+        const wishes = result.rows;
+        res.status(200).json(wishes);
+
+    } catch (err) {
+        console.error('Error in getAllWishes',err.message)
+    }
+};

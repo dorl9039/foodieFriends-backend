@@ -40,7 +40,7 @@ CREATE TABLE attendee(
     visit_comment TEXT
 );
 
-INSERT INTO attendee (user_id, visit_id, visit_comment) VALUES (1, 1, 'test gethistory')
+INSERT INTO attendee (user_id, visit_id, visit_comment) VALUES (1, 1, 'testaccount visit to Cloud & Spirits')
 INSERT INTO attendee (user_id, visit_id, visit_comment) VALUES (1, 2, 'cloud & spirits visit')
 INSERT INTO attendee (user_id, visit_id, visit_comment) VALUES (2, 1, 'user2 visit to Noreetuh')
 
@@ -58,6 +58,10 @@ INSERT INTO visit (restaurant_id, restaurant_name, visit_date) VALUES ('rCpO-y4K
 SELECT v.visit_id, v.restaurant_id, v.restaurant_name, v.visit_date, a.user_id, a.visit_comment FROM attendee as a JOIN visit as v ON v.visit_id = a.visit_id WHERE a.user_id = 1;
 
 SELECT u.username FROM attendee as a JOIN app_user as u ON a.user_id = u.user_id JOIN visit as v ON v.visit_id = a.visit_id WHERE v.visit_id = 1;
+
+SELECT v.visit_id, v.restaurant_id, v.restaurant_name, v.visit_date, a.user_id, a.visit_comment FROM attendee AS a JOIN visit AS v ON v.visit_id = a.visit_id WHERE a.user_id = $1 AND v.visit_id = $2;
+
+DELETE FROM attendee AS a JOIN visit AS v ON v.visit_id = a.visit_id WHERE a.user_id = $1 AND v.visit_id = $2;
 
 CREATE TABLE friend(
     friend1_id INT,
