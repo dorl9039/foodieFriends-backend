@@ -31,8 +31,6 @@ export interface restaurantData {
     priceRange?: string
 };
 
-// Mapbox API call to get restaurant name and address
-
 
 // API call to Yelp (plugging in restaurant name and address) to get Yelp id
 export const getYelpData = async (data: restaurantData) => {
@@ -86,23 +84,10 @@ export const addRestaurant = async (restaurantData:restaurantData) => {
 };
 
 
-// const data = {
-//     restaurantName :'Noreetuh',
-//     address1: '128 1st Ave',
-//     city: 'New York City',
-//     state :'NY',
-//     country: 'US',
-//     latitude: 40.727276,
-//     longitude: -73.985149,
-// }
-
-// let restaurantId: string;
-
-// const restData = await getYelpData(data)
-// const restId = await addRestaurant(restData)
-
-// console.log(testPost(data))
-
-
-
-
+export const getAttendees = async (visitId) => {
+    const query = 'SELECT u.username FROM attendee AS a JOIN app_user AS u ON a.user_id = u.user_id JOIN visit AS v ON v.visit_id = a.visit_id WHERE v.visit_id = $1;'
+    const values = [visitId]
+    const result = await pool.query(query, values)
+    const attendees = result.rows.map(attendee => attendee.username);
+    return attendees
+}
