@@ -1,4 +1,5 @@
 import express, { Request, Response } from 'express';
+import { Pool } from 'pg';
 import pool from '../db';
 import { validateRecord, getYelpData, addRestaurant, getAttendees } from '../routeHelpers';
 
@@ -31,7 +32,6 @@ export const getWishlist = async (req: Request, res: Response) => {
 export const addWish = async (req: Request, res: Response) => {
     try {
         const {restaurantData, wishData} = req.body;
-        console.log(restaurantData, wishData)
         const userId = req.params.userId;
         // Check that the userId is valid
         const checkUserId = await validateRecord("app_user", "user_id", userId);
@@ -144,4 +144,68 @@ export const deleteVisit = async (req: Request, res: Response) => {
     } catch (err) {
         console.error('Error fetching user history', err.message);
     }
+}
+
+export interface visitData {
+    visitId?: number,
+    restaurantId: string,
+    restaurantName: string, 
+    visitDate: string,
+    visitComment: string,
+    attendees: Array<object>
+};
+// Create a visit for a user
+// Parameter: userId, req.body: an instance of visitData
+export const createVisit = async (req: Request, res: Response) => {
+    try {
+        //Create a visit record first
+        const visitData = req.body;
+        const userId = req.params.userId;
+        // Check that the userId is valid
+        const checkUserId = await validateRecord("app_user", "user_id", userId);
+        if (!checkUserId.isValid) {
+            res.status(checkUserId.status).json(`message: ${checkUserId.message}`);
+            return;
+        };
+    
+        const query = 'INSERT INTO visit (restaurant_id, restaurant_name, visit_date) VALUES($1, $2, $3) RETURNING *';
+        const values = [visitData.restaurantId, visitData.restaurantName, visitData.visitDate];
+        const result = await pool.query(query, values);
+        const newVisit = result.rows[0];
+    
+        for (const user of visitData.attendees) {
+            // Validate attendee is valid app_user
+            const checkAttendeeUserId = await validateRecord("app_user", "user_id", user.user_id);
+            if (!checkAttendeeUserId.isValid) {
+                res.status(checkAttendeeUserId.status).json(`message: ${checkAttendeeUserId.message}`);
+                return;
+            };
+            // Create attendee record for each visit attendee
+            let attendeeQuery: string;
+            let attendeeValues: Array<string>
+            // Insert visit comment for user creating the record
+            if (user.user_id == userId) {
+                attendeeQuery = 'INSERT INTO attendee (user_id, visit_id, visit_comment) VALUES($1, $2, $3)';
+                attendeeValues = [user.user_id, newVisit.visit_id, visitData.visitComment];
+            } else {        
+                attendeeQuery = 'INSERT INTO attendee (user_id, visit_id) VALUES($1, $2)';
+                attendeeValues = [user.user_id, newVisit.visit_id];
+            };
+            try {
+                await pool.query(attendeeQuery, attendeeValues)
+            } catch (err) {
+                console.error("Error in creating attendee record when creating new visit", err)
+            };
+        };
+        const newVisitRecord = {
+            ...newVisit,
+            user_id: userId,
+            visit_comment: visitData.visitComment,
+            attendees: visitData.attendees
+        };  
+        res.status(201).json(newVisitRecord);
+
+    } catch (err) {
+        console.error('Error in creating new visit', err)
+    };
 }

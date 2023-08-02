@@ -8,5 +8,6 @@ router.post('/:userId/wishlist', userController.addWish);
 router.get('/:userId/history', userController.getHistory)
 router.get('/:userId/history/:visitId', userController.getVisit)
 router.delete('/:userId/history/:visitId', userController.deleteVisit)
+router.post('/:userId/history', userController.createVisit)
 
 export default router;

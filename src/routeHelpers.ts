@@ -85,9 +85,9 @@ export const addRestaurant = async (restaurantData:restaurantData) => {
 
 
 export const getAttendees = async (visitId) => {
-    const query = 'SELECT u.username FROM attendee AS a JOIN app_user AS u ON a.user_id = u.user_id JOIN visit AS v ON v.visit_id = a.visit_id WHERE v.visit_id = $1;'
+    const query = 'SELECT u.username, u.user_id FROM attendee AS a JOIN app_user AS u ON a.user_id = u.user_id JOIN visit AS v ON v.visit_id = a.visit_id WHERE v.visit_id = $1;'
     const values = [visitId]
     const result = await pool.query(query, values)
-    const attendees = result.rows.map(attendee => attendee.username);
+    const attendees = result.rows
     return attendees
 }
