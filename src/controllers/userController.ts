@@ -211,7 +211,7 @@ export const createVisit = async (req: Request, res: Response) => {
 }
 
 //Params: userId, visitId. Req.body: visit_comment
-export const editAttendeeRecord = async (req: Request, res: Response) => {
+export const editAttendeeComment = async (req: Request, res: Response) => {
     try {
         const attendeeRecord = req.body
         //Validate user in db
@@ -249,4 +249,51 @@ export const editAttendeeRecord = async (req: Request, res: Response) => {
     } catch (err) {
         console.error(err.message);
     }
+}
+
+//Params: userId, visitId. Req.body: username of attendee
+export const editVisitAttendees = async (req: Request, res: Response) => {
+        try { 
+            const newAttendee = req.body
+            //Validate user in db
+            const userId = req.params.userId;
+            const checkUserId = await validateRecord("app_user", "user_id", userId);
+            if (!checkUserId.isValid) {
+                res.status(checkUserId.status).json(`message: ${checkUserId.message}`);
+                return;
+            };
+
+            //Validate visit
+            const visitId = req.params.visitId;
+            const checkVisitId = await validateRecord("visit", "visit_id", visitId);
+            if (!checkVisitId.isValid) {
+                res.status(checkVisitId.status).json(`message: ${checkVisitId.message}`);
+                return;
+            };
+
+            //Validate user was an attendee of visit and get list of all visit attendees
+            const attendees = await getAttendees(visitId)
+            if (attendees.length < 1) {
+                return {isValid: false, status: 404, message: `user with id ${userId} was not an attendee for visit ${visitId}`};
+            }
+            
+            const oldAttendeesUsernames = attendees.map(user => user.username)
+            if (!oldAttendeesUsernames.includes(newAttendee.username)) {
+                // Get attendee's id
+                const attendeeIdQuery = 'SELECT user_id FROM app_user WHERE username = $1';
+                const attendeeIdValues = [newAttendee.username]
+                const attendeeIdresult = await pool.query(attendeeIdQuery, attendeeIdValues);
+                const newAttendeeId = attendeeIdresult.rows[0].user_id
+
+                // create new attendee record
+                const newAttendeeQuery = 'INSERT INTO attendee (visit_id, user_id) VALUES ($1, $2)';
+                const newAttendeeValues = [visitId, newAttendeeId]
+                await pool.query(newAttendeeQuery, newAttendeeValues)
+                attendees.push({username: newAttendee.username, user_id: newAttendeeId})
+            }
+            res.status(200).json(attendees)
+
+        } catch (err) {
+            console.error("Error editing visit attendees", err)
+        }
 }
