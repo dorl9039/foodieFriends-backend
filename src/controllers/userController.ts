@@ -209,3 +209,44 @@ export const createVisit = async (req: Request, res: Response) => {
         console.error('Error in creating new visit', err)
     };
 }
+
+//Params: userId, visitId. Req.body: visit_comment
+export const editAttendeeRecord = async (req: Request, res: Response) => {
+    try {
+        const attendeeRecord = req.body
+        //Validate user in db
+        const userId = req.params.userId;
+        const checkUserId = await validateRecord("app_user", "user_id", userId);
+        if (!checkUserId.isValid) {
+            res.status(checkUserId.status).json(`message: ${checkUserId.message}`);
+            return;
+        };
+
+        //Validate visit
+        const visitId = req.params.visitId;
+        const checkVisitId = await validateRecord("visit", "visit_id", visitId);
+        if (!checkVisitId.isValid) {
+            res.status(checkVisitId.status).json(`message: ${checkVisitId.message}`);
+            return;
+        };
+
+        //Validate user was an attendee of visit
+        const checkAttendeeQuery = 'SELECT * FROM attendee WHERE user_id = $1 AND visit_id = $2';
+        const checkAttendeeValues = [userId, visitId]
+        const checkAttendeeResult = await pool.query(checkAttendeeQuery, checkAttendeeValues)
+        if (checkAttendeeResult.rows.length < 1) {
+            return {isValid: false, status: 404, message: `attendee with id ${userId} for visit ${visitId} not found`};
+        }
+        //Update attendee record
+        let query = 'UPDATE attendee SET visit_comment = $1 WHERE visit_id = $2 and user_id = $3 RETURNING *';
+        const values = [attendeeRecord.visit_comment, visitId, userId]
+
+        
+        const result = await pool.query(query, values);
+        const updatedAttendeeRecord = result.rows[0]
+        res.status(200).json(updatedAttendeeRecord);
+
+    } catch (err) {
+        console.error(err.message);
+    }
+}
