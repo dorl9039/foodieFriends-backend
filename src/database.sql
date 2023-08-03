@@ -10,7 +10,7 @@ CREATE TABLE app_user(
     creation_date DATE DEFAULT CURRENT_DATE
 );
 
-INSERT INTO app_user (username, first_name) VALUES ('user2', 'muji');
+INSERT INTO app_user (username, first_name) VALUES ('user3', 'mb');
 
 CREATE TABLE restaurant(
     restaurant_id TEXT PRIMARY KEY,

@@ -107,9 +107,9 @@ export const getVisit = async (req: Request, res: Response) => {
         const query = 'SELECT v.visit_id, v.restaurant_id, v.restaurant_name, v.visit_date, a.user_id, a.visit_comment FROM attendee AS a JOIN visit AS v ON v.visit_id = a.visit_id WHERE a.user_id = $1 AND v.visit_id = $2;';
         const values = [userId, visitId];
         const result = await pool.query(query, values);
-        const records = result.rows[0];
+        const record = result.rows[0];
         const attendees = await getAttendees(visitId)
-        const vistData = {...records, attendees}
+        const vistData = {...record, attendees}
         
         res.status(200).json(vistData);
 
@@ -291,7 +291,13 @@ export const editVisitAttendees = async (req: Request, res: Response) => {
                 await pool.query(newAttendeeQuery, newAttendeeValues)
                 attendees.push({username: newAttendee.username, user_id: newAttendeeId})
             }
-            res.status(200).json(attendees)
+
+            const updatedQuery = 'SELECT v.visit_id, v.restaurant_id, v.restaurant_name, v.visit_date, a.user_id, a.visit_comment FROM attendee AS a JOIN visit AS v ON v.visit_id = a.visit_id WHERE a.user_id = $1 AND v.visit_id = $2;';
+            const updatedValues = [userId, visitId];
+            const updatedResult = await pool.query(updatedQuery, updatedValues);
+            const updatedRecord = updatedResult.rows[0];
+            const updatedVisitRecord = {...updatedRecord, attendees}
+            res.status(200).json(updatedVisitRecord)
 
         } catch (err) {
             console.error("Error editing visit attendees", err)
