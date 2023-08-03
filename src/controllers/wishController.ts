@@ -5,7 +5,7 @@ import { validateRecord } from '../routeHelpers';
 // Get a wish
 export const getWish = async (req: Request, res: Response) => {
     try {
-        const wishId = req.params.wishId
+        const wishId = req.params.wishId;
         if (!Number(wishId)) {
             res.status(400).json(`message: id ${wishId} is invalid`);
             return;
@@ -58,6 +58,7 @@ export const editWish = async (req: Request, res: Response) => {
         values.push(wishId);
         const result = await pool.query(query, values);
         const updatedWish = result.rows[0]
+        
         res.status(200).json(updatedWish);
 
     } catch (err) {
@@ -83,5 +84,19 @@ export const deleteWish = async (req: Request, res: Response) => {
 
     } catch (err) {
         console.error(err.message);
+    }
+};
+
+//Get all wishes in db
+export const getAllWishes = async (req: Request, res: Response) => {
+    try {
+        const query = 'SELECT * FROM wish';
+        const result = await pool.query(query);
+        
+        const wishes = result.rows;
+        res.status(200).json(wishes);
+
+    } catch (err) {
+        console.error('Error in getAllWishes',err.message)
     }
 };
