@@ -35,7 +35,7 @@ export interface restaurantData {
 // API call to Yelp (plugging in restaurant name and address) to get Yelp id
 export const getYelpData = async (data: restaurantData) => {
     const yelpMatchUrl = 'https://api.yelp.com/v3/businesses/matches';
-    const yelpByIdUrl = 'https://api.yelp.com/v3/businesses'
+    const yelpByIdUrl = 'https://api.yelp.com/v3/businesses';
     const headers = {
         'Authorization': `Bearer ${process.env.YELP_API_TOKEN}`,
         'accept': 'application/json'
@@ -54,7 +54,7 @@ export const getYelpData = async (data: restaurantData) => {
 
         const byIdResponse: AxiosResponse = await axios.get(`${yelpByIdUrl}/${restaurantId}`, {headers});
         const categories = byIdResponse.data.categories.map(obj => obj.title);
-        const cuisine = categories.join(', ')
+        const cuisine = categories.join(', ');
 
         const restaurantData = {
             id: matchResponse.data.businesses[0].id,
@@ -85,9 +85,9 @@ export const addRestaurant = async (restaurantData:restaurantData) => {
 
 
 export const getAttendees = async (visitId) => {
-    const query = 'SELECT u.username, u.user_id FROM attendee AS a JOIN app_user AS u ON a.user_id = u.user_id JOIN visit AS v ON v.visit_id = a.visit_id WHERE v.visit_id = $1;'
-    const values = [visitId]
-    const result = await pool.query(query, values)
-    const attendees = result.rows
-    return attendees
+    const query = 'SELECT u.username, u.user_id FROM attendee AS a JOIN app_user AS u ON a.user_id = u.user_id JOIN visit AS v ON v.visit_id = a.visit_id WHERE v.visit_id = $1;';
+    const values = [visitId];
+    const result = await pool.query(query, values);
+    const attendees = result.rows;
+    return attendees;
 }

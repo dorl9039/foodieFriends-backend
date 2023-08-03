@@ -10,10 +10,10 @@ export const getAllVisits = async (req: Request, res: Response) => {
         const records = result.rows;
         
         // Get list of attendees for each visit
-        const allVisits = []
+        const allVisits = [];
         for (const record of records) {
-            const attendees = await getAttendees(record.visit_id)
-            allVisits.push({...record, attendees})
+            const attendees = await getAttendees(record.visit_id);
+            allVisits.push({...record, attendees});
         }
         res.status(200).json(allVisits);
 
