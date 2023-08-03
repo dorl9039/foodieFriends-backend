@@ -6,8 +6,9 @@ CREATE TABLE app_user(
     password_hash TEXT,
     first_name TEXT,
     last_name TEXT,
-    email_address TEXT,
-    creation_date DATE DEFAULT CURRENT_DATE
+    email TEXT,
+    creation_date DATE DEFAULT CURRENT_DATE,
+    google_id TEXT UNIQUE
 );
 
 ALTER TABLE app_user ADD google_id TEXT UNIQUE;
