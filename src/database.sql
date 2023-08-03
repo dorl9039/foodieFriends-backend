@@ -10,6 +10,10 @@ CREATE TABLE app_user(
     creation_date DATE DEFAULT CURRENT_DATE
 );
 
+ALTER TABLE app_user ADD google_id TEXT UNIQUE;
+ALTER TABLE app_user DROP COLUMN email_address;
+ALTER TABLE app_user ADD email TEXT UNIQUE;
+
 INSERT INTO app_user (username, first_name) VALUES ('user3', 'mb');
 
 CREATE TABLE restaurant(
