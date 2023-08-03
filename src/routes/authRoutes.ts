@@ -10,7 +10,7 @@ router.get('/', (req: Request, res: Response) => {
 
 router.get(
     '/google', passport.authenticate(
-        "google", {scope: ["profile"]})
+        "google", {scope: ["profile", "email"]})
 );
 
 router.get(
