@@ -8,20 +8,17 @@ import session from 'express-session';
 // }
 const router = Router();
 
-router.get('/', (req: Request, res: Response) => {
-    res.send('hi auth');
-});
 
 router.get(
-    '/google', passport.authenticate("google", {
-        scope: ["profile", "email"]
+    '/google', passport.authenticate('google', {
+        scope: ['profile', 'email']
     })
 );
 
 router.get(
     '/google/callback', 
     passport.authenticate('google', {session: true}), (req: Request, res: Response) => {
-        res.send(req.user)
+        res.redirect(`${process.env.CLIENT_URL}`);
     }
 );
 

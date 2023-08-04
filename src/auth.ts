@@ -18,7 +18,7 @@ passport.use(new GoogleStrategy( {
     clientSecret: process.env.CLIENT_SECRET,
     callbackURL: process.env.GOOGLE_CALLBACK_URL,
 
-    }, async (_, __, email, profile, done) => {
+    }, async (_, __, profile, done) => {
         const account = profile._json;
         const datetime = new Date();
 
@@ -49,7 +49,6 @@ passport.use(new GoogleStrategy( {
                     creationDate: currentUserQuery.rows[0].creation_date,
                     googleId: currentUserQuery.rows[0].google_id,
                 }
-                // console.log('user:', user)
                 done(null, user)
             }
         } catch (err) {
