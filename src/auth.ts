@@ -49,7 +49,7 @@ passport.use(new GoogleStrategy( {
                     creationDate: currentUserQuery.rows[0].creation_date,
                     googleId: currentUserQuery.rows[0].google_id,
                 }
-                console.log('user:', user)
+                // console.log('user:', user)
                 done(null, user)
             }
         } catch (err) {
@@ -58,3 +58,10 @@ passport.use(new GoogleStrategy( {
     })
 );
 
+passport.serializeUser((user, done) => {
+    done(null, user)
+    })
+
+passport.deserializeUser((user, done) => {
+    done(null, user)
+})
