@@ -303,3 +303,49 @@ export const editVisitAttendees = async (req: Request, res: Response) => {
             console.error("Error editing visit attendees", err);
         };
 };
+
+// get username
+// param: userId
+export const getUsername = async (req: Request, res: Response) => {
+    try {
+        const userId = req.params.userId
+        // Look up username. If does not exist, return null
+        const result = await pool.query('SELECT username FROM app_user WHERE user_id = $1', [userId])
+        if (result.rows.length < 1) {
+            res.status(404).json(null)
+        } else {
+            res.status(200).json(result.rows[0])
+        }
+    } catch (err) {
+        console.error('Error in getUsername', err)
+    }   
+}
+
+// Param: userId. req.body: object {username: ''}
+export const editUsername = async (req: Request, res: Response) => {
+    try {
+        //Validate user in db
+        const userId = req.params.userId;
+        const checkUserId = await validateRecord("app_user", "user_id", userId);
+        if (!checkUserId.isValid) {
+            res.status(checkUserId.status).json(`message: ${checkUserId.message}`);
+            return;
+        };
+        const {username} = req.body
+        console.log('username', username)
+        // Check that requested username is not taken
+        const checkUsernameAvailability = await pool.query('SELECT * FROM app_user WHERE username = $1', [username])
+        if (checkUsernameAvailability.rows.length > 0) {
+            res.status(409).json(`Username ${username} already exists`)
+        }
+        console.log('username does not preexist')
+        const query = 'UPDATE app_user SET username = $1 WHERE user_id = $2 RETURNING *';
+        const values = [username, userId]
+        const result = await pool.query(query, values)
+        const updatedUser = result.rows[0]
+        console.log('updatedUser', updatedUser)
+        res.status(200).json(updatedUser)
+    } catch (err) {
+        console.error("Error in setUsername", err)
+    }
+}

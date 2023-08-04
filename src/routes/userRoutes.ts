@@ -11,5 +11,8 @@ router.delete('/:userId/history/:visitId', userController.deleteVisit);
 router.post('/:userId/history', userController.createVisit);
 router.patch('/:userId/history/:visitId', userController.editAttendeeComment);
 router.patch('/:userId/history/:visitId/attendees', userController.editVisitAttendees);
+router.patch('/:userId/username', userController.editUsername);
+router.get('/:userId/username', userController.getUsername);
+
 
 export default router;
