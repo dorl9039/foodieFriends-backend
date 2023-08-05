@@ -3,9 +3,6 @@ import passport from 'passport';
 import session from 'express-session';
 
 
-// declare module 'express-session' {
-//     export interface SessionData
-// }
 const router = Router();
 
 

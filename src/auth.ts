@@ -45,7 +45,6 @@ passport.use(new GoogleStrategy( {
                     googleId: createUserResult.rows[0].google_id,
                     needsUsername: true
                 }
-                // console.log('newuser:', newUser)
                 done(null, newUser)
             } 
             const user = {
@@ -59,10 +58,9 @@ passport.use(new GoogleStrategy( {
                 needsUsername: true
             }
             if (currentUser[0] && !currentUser[0].username){
-                done(null, user)
+                done(null, user);
             } else {
-                
-                done(null, {...user, needsUsername: false})
+                done(null, {...user, needsUsername: false});
             }
         } catch (err) {
             done(err)
