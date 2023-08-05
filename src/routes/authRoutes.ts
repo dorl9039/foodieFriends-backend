@@ -3,9 +3,6 @@ import passport from 'passport';
 import session from 'express-session';
 
 
-// declare module 'express-session' {
-//     export interface SessionData
-// }
 const router = Router();
 
 
@@ -21,7 +18,6 @@ router.get(
         if (req.user.needsUsername) {
             res.redirect(`${process.env.CLIENT_URL}/register`)
         } else {
-        console.log('req.user in google/callback', req.user)
         res.redirect(`${process.env.CLIENT_URL}`);
         }
     }

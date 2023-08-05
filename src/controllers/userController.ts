@@ -1,7 +1,6 @@
-import express, { Request, Response } from 'express';
-import { Pool } from 'pg';
+import e, { Request, Response } from 'express';
 import pool from '../db';
-import { validateRecord, getYelpData, addRestaurant, getAttendees } from '../routeHelpers';
+import { validateRecord, getYelpData, addRestaurant, getAttendees, compareNumbers, findFriendship } from '../routeHelpers';
 
 
 // Display list of wishes for a user
@@ -12,6 +11,7 @@ export const getWishlist = async (req: Request, res: Response) => {
         const checkUserId = await validateRecord("app_user", "user_id", userId)
         if (!checkUserId.isValid) {
             res.status(checkUserId.status).json(`message: ${checkUserId.message}`);
+            return;
         }
 
         const query = 'SELECT * FROM wish WHERE user_id = $1';
@@ -65,6 +65,7 @@ export const getHistory = async (req: Request, res: Response) => {
         const checkUserId = await validateRecord("app_user", "user_id", userId);
         if (!checkUserId.isValid) {
             res.status(checkUserId.status).json(`message: ${checkUserId.message}`);
+            return;
         }
         // get list of attendee records
         const query = 'SELECT v.visit_id, v.restaurant_id, v.restaurant_name, v.visit_date, a.user_id, a.visit_comment FROM attendee AS a JOIN visit AS v ON v.visit_id = a.visit_id WHERE a.user_id = $1;';
@@ -94,6 +95,7 @@ export const getVisit = async (req: Request, res: Response) => {
         const checkUserId = await validateRecord("app_user", "user_id", userId);
         if (!checkUserId.isValid) {
             res.status(checkUserId.status).json(`message: ${checkUserId.message}`);
+            return;
         }
 
         const visitId = req.params.visitId;
@@ -101,6 +103,7 @@ export const getVisit = async (req: Request, res: Response) => {
         const checkVisitId = await validateRecord("attendee", "visit_id", visitId);
         if (!checkUserId.isValid) {
             res.status(checkUserId.status).json(`message: ${checkUserId.message}`);
+            return;
         }
 
         // get visit record
@@ -127,6 +130,7 @@ export const deleteVisit = async (req: Request, res: Response) => {
         const checkUserId = await validateRecord("app_user", "user_id", userId);
         if (!checkUserId.isValid) {
             res.status(checkUserId.status).json(`message: ${checkUserId.message}`);
+            return;
         }
 
         const visitId = req.params.visitId;
@@ -134,6 +138,7 @@ export const deleteVisit = async (req: Request, res: Response) => {
         const checkVisitId = await validateRecord("attendee", "visit_id", visitId);
         if (!checkUserId.isValid) {
             res.status(checkUserId.status).json(`message: ${checkUserId.message}`);
+            return;
         }
         const query = 'DELETE FROM attendee WHERE user_id = $1 AND visit_id = $2;';
         const values = [userId, visitId];
@@ -235,12 +240,12 @@ export const editAttendeeComment = async (req: Request, res: Response) => {
         const checkAttendeeValues = [userId, visitId];
         const checkAttendeeResult = await pool.query(checkAttendeeQuery, checkAttendeeValues);
         if (checkAttendeeResult.rows.length < 1) {
-            return {isValid: false, status: 404, message: `attendee with id ${userId} for visit ${visitId} not found`};
+            res.status(404).json(`attendee with id ${userId} for visit ${visitId} not found`)
+            return;
         }
         //Update attendee record
         let query = 'UPDATE attendee SET visit_comment = $1 WHERE visit_id = $2 and user_id = $3 RETURNING *';
         const values = [attendeeRecord.visit_comment, visitId, userId];
-
         
         const result = await pool.query(query, values);
         const updatedAttendeeRecord = result.rows[0];
@@ -274,7 +279,8 @@ export const editVisitAttendees = async (req: Request, res: Response) => {
             //Validate user was an attendee of visit and get list of all visit attendees
             const attendees = await getAttendees(visitId);
             if (attendees.length < 1) {
-                return {isValid: false, status: 404, message: `user with id ${userId} was not an attendee for visit ${visitId}`};
+                res.status(404).json(`user with id ${userId} was not an attendee for visit ${visitId}`);
+                return;
             }
             
             const oldAttendeesUsernames = attendees.map(user => user.username);
@@ -334,18 +340,153 @@ export const editUsername = async (req: Request, res: Response) => {
         const {username} = req.body
         console.log('username', username)
         // Check that requested username is not taken
-        const checkUsernameAvailability = await pool.query('SELECT * FROM app_user WHERE username = $1', [username])
-        if (checkUsernameAvailability.rows.length > 0) {
-            res.status(409).json(`Username ${username} already exists`)
-        }
-        console.log('username does not preexist')
+        const checkUsernameAvailability = await validateRecord('app_user', 'username', username)
+        if (checkUsernameAvailability.isValid) {
+            res.status(409).json(`Username ${username} already exists`);
+            return;
+        };
         const query = 'UPDATE app_user SET username = $1 WHERE user_id = $2 RETURNING *';
-        const values = [username, userId]
-        const result = await pool.query(query, values)
-        const updatedUser = result.rows[0]
-        console.log('updatedUser', updatedUser)
-        res.status(200).json(updatedUser)
+        const values = [username, userId];
+        const result = await pool.query(query, values);
+        const updatedUser = result.rows[0];
+        console.log('updatedUser', updatedUser);
+        res.status(200).json(updatedUser);
     } catch (err) {
         console.error("Error in setUsername", err)
+    }
+}
+
+
+// add new friend to user's friends
+// Params: userId, req body: {username: ''}
+export const addFriend = async (req: Request, res: Response) => {
+    try {
+        const userId = req.params.userId;
+        const checkUserId = await validateRecord("app_user", "user_id", userId);
+        if (!checkUserId.isValid) {
+            res.status(checkUserId.status).json(`message: ${checkUserId.message}`);
+            return;
+        }
+
+        // Find friend's user_id from the username
+        const friendUsername = req.body.username;
+        
+        // Check if friend username exists
+        const friendResult = await pool.query('SELECT user_id FROM app_user WHERE username = $1', [friendUsername])
+        if (friendResult.rows.length < 1) {
+            res.status(404).json(`No user with username ${friendUsername} was found`);
+            return;
+        }
+        // check friendship does not already exist in db
+        const friendId = friendResult.rows[0].user_id
+        const checkExisting = await findFriendship(userId, friendId)
+        // Return existing record
+        if (checkExisting.rows.length > 0) {
+            res.status(200).json(checkExisting.rows[0])
+            return;
+        } 
+        const query = 'INSERT INTO friend (friend1_id, friend2_id) VALUES ($1, $2) RETURNING *';
+        const ids = [userId, friendId];
+        // Always insert id with smaller value as friend1_id
+        const values = ids.sort(compareNumbers)
+        const result = await pool.query(query, values);
+        const newFriendship = result.rows[0];
+        res.status(201).json(newFriendship);
+        
+    } catch (err) {
+        console.error('Error in addFriend', err)
+    };
+}
+
+// Delete a friend relationship
+// Params: userId, friendId
+export const deleteFriend = async (req: Request, res: Response) => {
+    try {
+        const userId = req.params.userId;
+        const checkUserId = await validateRecord("app_user", "user_id", userId);
+        if (!checkUserId.isValid) {
+            res.status(checkUserId.status).json(`message: ${checkUserId.message}`);
+            return;
+        };
+
+        const friendId = req.params.friendId
+        const ids = [userId, friendId];
+        const validateFriendship = await findFriendship(userId, friendId)
+        if (validateFriendship.rows.length < 1) {
+            res.status(404).json(`No friendship with user ${friendId} was found`);
+            return;
+        };
+        const query = 'DELETE FROM friend WHERE friend1_id = $1 AND friend2_id = $2';
+        const values = ids.sort(compareNumbers);
+        await pool.query(query, values);
+
+        res.status(200).json(`Unfriended user ${friendId}`);
+        
+    } catch (err) {
+        console.error('Error in deleteFriend', err);
+    };
+};
+
+// Get all friends of user
+// Params: userId
+export const getAllFriends = async (req: Request, res: Response) => {
+    try {
+        const userId = req.params.userId;
+        const checkUserId = await validateRecord("app_user", "user_id", userId);
+        if (!checkUserId.isValid) {
+            res.status(checkUserId.status).json(`message: ${checkUserId.message}`);
+            return;
+        }
+        const query = 'SELECT app_user.user_id, app_user.username, app_user.first_name, app_user.last_name FROM app_user JOIN friend ON app_user.user_id = friend.friend1_id WHERE friend.friend2_id = $1 UNION SELECT app_user.user_id, app_user.username, app_user.first_name, app_user.last_name FROM app_user JOIN friend ON app_user.user_id = friend.friend2_id WHERE friend.friend1_id = $1';
+        const values = [userId];
+        const result = await pool.query(query, values);
+        const friends = result.rows;
+        res.status(200).json(friends);
+
+    } catch (err) {
+        console.error("Error in getAllFriends", err)
+    };
+};
+
+// Get foodie friends
+// params: userId
+export const getFoodieFriends = async (req: Request, res: Response) => {
+    try {
+        const userId = req.params.userId;
+        const checkUserId = await validateRecord("app_user", "user_id", userId);
+        if (!checkUserId.isValid) {
+            res.status(checkUserId.status).json(`message: ${checkUserId.message}`);
+            return;
+        }
+
+        // get user's wishlist
+        const wishlistResult = await pool.query('SELECT wish.user_id, wish.wish_id, wish.wish_comment, wish.wish_priority, wish.restaurant_id, restaurant.restaurant_name, restaurant.cuisine, restaurant.price_range, restaurant.address_line1, restaurant.address_city, restaurant.address_country FROM wish JOIN restaurant on restaurant.restaurant_id = wish.restaurant_id WHERE wish.user_id = $1', [userId])
+        if (wishlistResult.rows.length < 1) {
+            res.status(200).json({"wishlist":[], "message": "No wishes found"});
+            return;
+        }
+
+        // get list of all friends
+        const friendsResult = await pool.query('SELECT app_user.user_id, app_user.username, app_user.first_name, app_user.last_name FROM app_user JOIN friend ON app_user.user_id = friend.friend1_id WHERE friend.friend2_id = $1 UNION SELECT app_user.user_id, app_user.username, app_user.first_name, app_user.last_name FROM app_user JOIN friend ON app_user.user_id = friend.friend2_id WHERE friend.friend1_id = $1', [userId])
+        // If user has no friends
+        if (friendsResult.rows.length < 1) {
+            res.status(200).json({"friends":[], "message": "No friends found"});
+            return;
+        } 
+
+        // for each wish, look through each friend's wishlist for a match
+        const foodieFriends = []
+        for (const wish of wishlistResult.rows) {
+            for (const friend of friendsResult.rows) {
+                const friendWishlist = await pool.query('SELECT restaurant_id FROM wish WHERE user_id = $1', [friend.user_id])
+                const restaurants = friendWishlist.rows.map(friendWish => friendWish.restaurant_id)
+                if (restaurants.includes(wish.restaurant_id)) {
+                    foodieFriends.push({friend, wishRestaurant:wish})
+                }
+            }
+        }
+        res.status(200).json(foodieFriends)
+    } catch (err) {
+        console.error('Error in getFoodieFriends', err)
     }
 }
