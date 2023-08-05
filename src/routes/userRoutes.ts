@@ -18,5 +18,6 @@ router.get('/:userId/username', userController.getUsername);
 
 router.post('/:userId/friends', userController.addFriend);
 router.delete('/:userId/friends/:friendId', userController.deleteFriend)
+router.get('/:userId/friends', userController.getAllFriends)
 
 export default router;

@@ -407,7 +407,7 @@ export const deleteFriend = async (req: Request, res: Response) => {
         if (!checkUserId.isValid) {
             res.status(checkUserId.status).json(`message: ${checkUserId.message}`);
             return;
-        }
+        };
 
         const friendId = req.params.friendId
         const ids = [userId, friendId];
@@ -415,7 +415,7 @@ export const deleteFriend = async (req: Request, res: Response) => {
         if (validateFriendship.rows.length < 1) {
             res.status(404).json(`No friendship with user ${friendId} was found`);
             return;
-        } 
+        };
         const query = 'DELETE FROM friend WHERE friend1_id = $1 AND friend2_id = $2';
         const values = ids.sort(compareNumbers);
         await pool.query(query, values);
@@ -424,5 +424,26 @@ export const deleteFriend = async (req: Request, res: Response) => {
         
     } catch (err) {
         console.error('Error in deleteFriend', err);
+    };
+};
+
+// Get all friends of user
+// Params: userId
+export const getAllFriends = async (req: Request, res: Response) => {
+    try {
+        const userId = req.params.userId;
+        const checkUserId = await validateRecord("app_user", "user_id", userId);
+        if (!checkUserId.isValid) {
+            res.status(checkUserId.status).json(`message: ${checkUserId.message}`);
+            return;
+        }
+        const query = 'SELECT app_user.user_id, app_user.username, app_user.first_name, app_user.last_name FROM app_user JOIN friend ON app_user.user_id = friend.friend1_id WHERE friend.friend2_id = $1 UNION SELECT app_user.user_id, app_user.username, app_user.first_name, app_user.last_name FROM app_user JOIN friend ON app_user.user_id = friend.friend2_id WHERE friend.friend1_id = $1';
+        const values = [userId];
+        const result = await pool.query(query, values);
+        const friends = result.rows;
+        res.status(200).json(friends);
+        
+    } catch (err) {
+        console.error("Error in getAllFriends", err)
     }
 }
