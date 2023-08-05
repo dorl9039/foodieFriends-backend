@@ -44,6 +44,15 @@ export const compareNumbers = (a, b) => {
     return a - b
 }
 
+export const checkExists = async (attrType: string, attr: string) => {
+    const result = await pool.query(`SELECT * FROM app_user WHERE ${attrType} = $1`, [attr]);
+
+    if (result.rowCount == 0) return false;
+    return result.rows[0];
+}
+
+
+
 // External API calls
 
 export interface restaurantData {
