@@ -91,3 +91,12 @@ export const getAttendees = async (visitId) => {
     const attendees = result.rows;
     return attendees;
 }
+
+import { Request, Response } from 'express'
+export const isAuth = (req: Request, res: Response, next) => {
+    if (req.user) {
+        next()
+    } else {
+        res.json({loggedIn: false})
+    }
+}
