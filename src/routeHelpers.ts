@@ -100,3 +100,7 @@ export const isAuth = (req: Request, res: Response, next) => {
         res.json({loggedIn: false})
     }
 }
+
+export const compareNumbers = (a, b) => {
+    return a - b
+}

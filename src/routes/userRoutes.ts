@@ -13,6 +13,6 @@ router.patch('/:userId/history/:visitId', userController.editAttendeeComment);
 router.patch('/:userId/history/:visitId/attendees', userController.editVisitAttendees);
 router.patch('/:userId/username', userController.editUsername);
 router.get('/:userId/username', userController.getUsername);
-
+router.post('/:userId/friends', userController.addFriend);
 
 export default router;

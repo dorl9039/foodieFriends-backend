@@ -1,7 +1,6 @@
-import express, { Request, Response } from 'express';
-import { Pool } from 'pg';
+import e, { Request, Response } from 'express';
 import pool from '../db';
-import { validateRecord, getYelpData, addRestaurant, getAttendees } from '../routeHelpers';
+import { validateRecord, getYelpData, addRestaurant, getAttendees, compareNumbers } from '../routeHelpers';
 
 
 // Display list of wishes for a user
@@ -348,4 +347,44 @@ export const editUsername = async (req: Request, res: Response) => {
     } catch (err) {
         console.error("Error in setUsername", err)
     }
+}
+
+
+// add new friend to user's friends
+// Params: userId, req body: {username: ''}
+export const addFriend = async (req: Request, res: Response) => {
+    try {
+        const userId = req.params.userId;
+        const checkUserId = await validateRecord("app_user", "user_id", userId)
+        if (!checkUserId.isValid) {
+            res.status(checkUserId.status).json(`message: ${checkUserId.message}`);
+        }
+
+        // Find friend's user_id from the username
+        const friendUsername = req.body.username;
+        
+        // Check if friend username exists
+        const friendIdResult = await pool.query('SELECT user_id FROM app_user WHERE username = $1', [friendUsername]);
+        if (friendIdResult.rows.length < 1) {
+            res.status(404).json(`No user with username ${friendUsername} was found`)
+        } else {
+            // check friendship does not already exist in db
+            const friendId = friendIdResult.rows[0].user_id
+            const checkExisting = await pool.query('SELECT * FROM friend WHERE (friend1_id = $1 and friend2_id = $2) OR (friend1_id = $2 and friend2_id = $1)', [userId, friendId])
+            // Return existing record
+            if (checkExisting.rows.length > 0) {
+                res.status(200).json(checkExisting.rows[0])
+            } else {
+                const query = 'INSERT INTO friend (friend1_id, friend2_id) VALUES ($1, $2) RETURNING *';
+                const ids = [userId, friendId];
+                // Always insert id with smaller value as friend1_id
+                const values = ids.sort(compareNumbers)
+                const result = await pool.query(query, values);
+                const newFriendship = result.rows[0];
+                res.status(201).json(newFriendship);
+            }
+        }
+    } catch (err) {
+        console.error('Error in addFriend', err)
+    };
 }
