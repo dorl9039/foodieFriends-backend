@@ -1,5 +1,6 @@
 import pool from './db';
 import 'dotenv/config';
+import { Request, Response } from 'express'
 import axios, { AxiosResponse } from 'axios';
 
 export const validateRecord = async (table: string, idType: string, id: string) => {
@@ -21,6 +22,26 @@ export const findFriendship = async(userId: string, friendId: string) => {
     const values = [userId, friendId]
     const friendship = await pool.query(query, values)
     return friendship
+}
+
+export const getAttendees = async (visitId) => {
+    const query = 'SELECT u.username, u.user_id FROM attendee AS a JOIN app_user AS u ON a.user_id = u.user_id JOIN visit AS v ON v.visit_id = a.visit_id WHERE v.visit_id = $1;';
+    const values = [visitId];
+    const result = await pool.query(query, values);
+    const attendees = result.rows;
+    return attendees;
+}
+
+export const isAuth = (req: Request, res: Response, next) => {
+    if (req.user) {
+        next()
+    } else {
+        res.json({loggedIn: false})
+    }
+}
+
+export const compareNumbers = (a, b) => {
+    return a - b
 }
 
 // External API calls
@@ -90,24 +111,3 @@ export const addRestaurant = async (restaurantData:restaurantData) => {
     return restaurantData.id;
 };
 
-
-export const getAttendees = async (visitId) => {
-    const query = 'SELECT u.username, u.user_id FROM attendee AS a JOIN app_user AS u ON a.user_id = u.user_id JOIN visit AS v ON v.visit_id = a.visit_id WHERE v.visit_id = $1;';
-    const values = [visitId];
-    const result = await pool.query(query, values);
-    const attendees = result.rows;
-    return attendees;
-}
-
-import { Request, Response } from 'express'
-export const isAuth = (req: Request, res: Response, next) => {
-    if (req.user) {
-        next()
-    } else {
-        res.json({loggedIn: false})
-    }
-}
-
-export const compareNumbers = (a, b) => {
-    return a - b
-}

@@ -18,7 +18,6 @@ router.get(
         if (req.user.needsUsername) {
             res.redirect(`${process.env.CLIENT_URL}/register`)
         } else {
-        console.log('req.user in google/callback', req.user)
         res.redirect(`${process.env.CLIENT_URL}`);
         }
     }
