@@ -70,6 +70,10 @@ DELETE FROM attendee AS a JOIN visit AS v ON v.visit_id = a.visit_id WHERE a.use
 
 CREATE TABLE friend(
     friend1_id INT,
-    friend2_id INT
+    friend2_id INT,
+    CONSTRAINT unique_friendship UNIQUE (friend1_id, friend2_id)
 );
 
+SELECT app_user.user_id, app_user.username, app_user.first_name, app_user.last_name FROM app_user JOIN friend ON app_user.user_id = friend.friend1_id WHERE friend.friend2_id = 2 
+UNION 
+SELECT app_user.user_id, app_user.username, app_user.first_name, app_user.last_name FROM app_user JOIN friend ON app_user.user_id = friend.friend2_id WHERE friend.friend1_id = 2;
