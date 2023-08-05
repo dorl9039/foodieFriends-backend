@@ -18,7 +18,12 @@ router.get(
 router.get(
     '/google/callback', 
     passport.authenticate('google', {session: true}), (req: Request, res: Response) => {
+        if (req.user.needsUsername) {
+            res.redirect(`${process.env.CLIENT_URL}/register`)
+        } else {
+        console.log('req.user in google/callback', req.user)
         res.redirect(`${process.env.CLIENT_URL}`);
+        }
     }
 );
 

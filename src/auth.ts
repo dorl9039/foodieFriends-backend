@@ -3,15 +3,21 @@ import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
 import 'dotenv/config';
 import pool from './db';
 
-export interface userData {
-    userId: number
-    username: string
-    firstName: string
-    lastName: string
-    email: string
-    creationDate: string,
-    googleId: string
-};
+declare global {
+    namespace Express {
+        interface User {
+            userId: number
+            username: string
+            firstName: string
+            lastName: string
+            email: string
+            creationDate: string,
+            googleId: string
+            needsUsername: boolean
+        }
+    }
+}
+
 
 passport.use(new GoogleStrategy( {
     clientID: process.env.CLIENT_ID,
@@ -23,9 +29,10 @@ passport.use(new GoogleStrategy( {
         const datetime = new Date();
 
         try {
-            const currentUserQuery = await pool.query('SELECT * FROM app_user WHERE google_id = $1', [account.sub])
-            if (currentUserQuery.rows.length === 0 ){
-                const createUserQuery = "INSERT INTO app_user ( first_name, last_name, email, creation_date, google_id) VALUES ($1, $2, $3, $4, $5) RETURNING *";
+            const currentUserResult = await pool.query('SELECT * FROM app_user WHERE google_id = $1', [account.sub])
+            const currentUser = currentUserResult.rows
+            if (currentUser.length === 0 ){
+                const createUserQuery = "INSERT INTO app_user (first_name, last_name, email, creation_date, google_id) VALUES ($1, $2, $3, $4, $5) RETURNING *";
                 const createUserValues = [account.given_name, account.family_name, account.email, datetime, account.sub];
                 const createUserResult = await pool.query(createUserQuery, createUserValues)
                 const newUser = {
@@ -36,20 +43,26 @@ passport.use(new GoogleStrategy( {
                     email: createUserResult.rows[0].email,
                     creationDate: createUserResult.rows[0].creation_date,
                     googleId: createUserResult.rows[0].google_id,
+                    needsUsername: true
                 }
-                console.log('newuser:', newUser)
+                // console.log('newuser:', newUser)
                 done(null, newUser)
-            } else {
-                const user = {
-                    userId: currentUserQuery.rows[0].user_id,
-                    username: currentUserQuery.rows[0].username,
-                    firstName: currentUserQuery.rows[0].first_name,
-                    lastName: currentUserQuery.rows[0].last_name,
-                    email: currentUserQuery.rows[0].email,
-                    creationDate: currentUserQuery.rows[0].creation_date,
-                    googleId: currentUserQuery.rows[0].google_id,
-                }
+            } 
+            const user = {
+                userId: currentUser[0].user_id,
+                username: currentUser[0].username,
+                firstName: currentUser[0].first_name,
+                lastName: currentUser[0].last_name,
+                email: currentUser[0].email,
+                creationDate: currentUser[0].creation_date,
+                googleId: currentUser[0].google_id,
+                needsUsername: true
+            }
+            if (currentUser[0] && !currentUser[0].username){
                 done(null, user)
+            } else {
+                
+                done(null, {...user, needsUsername: false})
             }
         } catch (err) {
             done(err)
@@ -61,6 +74,6 @@ passport.serializeUser((user, done) => {
     done(null, user)
     })
 
-passport.deserializeUser((user, done) => {
+passport.deserializeUser((user: Express.User, done) => {
     done(null, user)
 })
