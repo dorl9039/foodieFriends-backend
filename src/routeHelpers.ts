@@ -16,6 +16,13 @@ export const validateRecord = async (table: string, idType: string, id: string) 
     return {isValid: true, status: null, message: null}
 };
 
+export const findFriendship = async(userId: string, friendId: string) => {
+    const query = 'SELECT * FROM friend WHERE (friend1_id = $1 and friend2_id = $2) OR (friend1_id = $2 and friend2_id = $1)'
+    const values = [userId, friendId]
+    const friendship = await pool.query(query, values)
+    return friendship
+}
+
 // External API calls
 
 export interface restaurantData {
