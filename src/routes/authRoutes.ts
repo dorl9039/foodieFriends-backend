@@ -33,4 +33,20 @@ router.post(
     passport.authenticate('local-login', { session: true, successRedirect: `${process.env.CLIENT_URL}`, failureRedirect: '/login' })
 )
 
+
+// router.post(
+//     '/register',
+//     passport.authenticate('local-register', { session: true }),
+//     (req, res, next) => {
+//         res.json(req.user)
+//     }
+// )
+
+// router.post(
+//     '/login', 
+//     passport.authenticate('local-login', { session: true }),
+//     (req, res, next) => {
+//         res.json(req.user)
+//     }
+// )
 export default router;

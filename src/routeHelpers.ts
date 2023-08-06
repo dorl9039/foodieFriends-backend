@@ -57,7 +57,7 @@ export const createUser = async (firstName: string, lastName: string, username: 
     const hashPassword = await bcrypt.hash(password, salt);
     const creationDate = new Date()
 
-    const query = 'INSERT INTO app_user (username, password_hash, first_name, last_name, email, creation_date';
+    const query = 'INSERT INTO app_user (username, password_hash, first_name, last_name, email, creation_date) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *';
     const values = [username, hashPassword, firstName, lastName, email, creationDate];
 
     const result = await pool.query(query, values);
