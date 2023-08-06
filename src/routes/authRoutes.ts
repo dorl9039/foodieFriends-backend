@@ -24,29 +24,40 @@ router.get(
 );
 
 router.post(
-    '/register',
+    '/register', 
     passport.authenticate('local-register', { session: true, successRedirect: `${process.env.CLIENT_URL}`, failureRedirect: '/register' })
 )
 
-router.post(
-    '/login', 
-    passport.authenticate('local-login', { session: true, successRedirect: `${process.env.CLIENT_URL}`, failureRedirect: '/login' })
-)
+// router.post(
+//     '/login', 
+//     passport.authenticate('local-login', { session: true, successRedirect: `${process.env.CLIENT_URL}`, failureRedirect: '/login' })
+//     )
+
+// router.post(
+//     '/login', 
+//     passport.authenticate('local-login', { session: true}), (req, res) => {
+//         if (!req.user) {
+//             res.redirect(`${process.env.CLIENT_URL}/login`)
+//         }
+//         res.send(req.user)
+//         res.redirect(`${process.env.CLIENT_URL}`)
+//     }
+//     )
 
 
 // router.post(
 //     '/register',
 //     passport.authenticate('local-register', { session: true }),
 //     (req, res, next) => {
-//         res.json(req.user)
+//         res.send(req.user)
 //     }
 // )
 
-// router.post(
-//     '/login', 
-//     passport.authenticate('local-login', { session: true }),
-//     (req, res, next) => {
-//         res.json(req.user)
-//     }
-// )
+router.post(
+    '/login', 
+    passport.authenticate('local-login', { session: true }),
+    (req, res, next) => {
+        res.send(req.user)
+    }
+)
 export default router;

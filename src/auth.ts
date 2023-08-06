@@ -103,9 +103,13 @@ passport.use('local-login', new LocalStrategy(
     async (req, username, password, done) => {
         try {
             const user = await checkExists('username', username);
-            if (!user) return done(null, false);
+            if (!user) {
+                return done(null, false)
+            };
             const isMatch = await matchPassword(password, user.password_hash);
-            if (!isMatch) return done(null, false);
+            if (!isMatch) {
+                return done(null, false)};
+            
             return done(null, 
                 {
                     userId: user.user_id,
@@ -124,9 +128,11 @@ passport.use('local-login', new LocalStrategy(
 ))
             
 passport.serializeUser((user, done) => {
+    console.log('in passport.serializeUser. user:', user)
     done(null, user)
     })
 
 passport.deserializeUser((user: Express.User, done) => {
+    console.log('in deserializeUser. user:', user)
     done(null, user)
 })
