@@ -70,13 +70,6 @@ passport.use(new GoogleStrategy( {
     })
 );
 
-passport.serializeUser((user, done) => {
-    done(null, user)
-    })
-
-passport.deserializeUser((user: Express.User, done) => {
-    done(null, user)
-})
 
 
 passport.use('local-register', new LocalStrategy(
@@ -98,8 +91,9 @@ passport.use('local-register', new LocalStrategy(
             done(error)
         }
     }
-));
-
+    )
+);
+    
 passport.use('local-login', new LocalStrategy(
     {
         usernameField: 'username',
@@ -127,4 +121,12 @@ passport.use('local-login', new LocalStrategy(
             return done(error, false)
         }
     }
-    ))
+))
+            
+passport.serializeUser((user, done) => {
+    done(null, user)
+    })
+
+passport.deserializeUser((user: Express.User, done) => {
+    done(null, user)
+})

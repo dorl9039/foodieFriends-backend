@@ -23,4 +23,14 @@ router.get(
     }
 );
 
+router.post(
+    '/register',
+    passport.authenticate('local-register', { session: true, successRedirect: `${process.env.CLIENT_URL}`, failureRedirect: '/register' })
+)
+
+router.post(
+    '/login', 
+    passport.authenticate('local-login', { session: true, successRedirect: `${process.env.CLIENT_URL}`, failureRedirect: '/login' })
+)
+
 export default router;
