@@ -82,8 +82,10 @@ passport.use('local-register', new LocalStrategy(
         try {
             const emailExists = await checkExists('email', req.body.email);
             const usernameExists = await checkExists('username', username);
-            if (emailExists || usernameExists) {
-                return done(null, false);
+            if (emailExists) {
+                return done(null, false, {message: `The email '${req.body.email}' is already in use.`});
+            } else if (usernameExists) {
+                return done(null, false, {message: `The username '${username}' is already taken.`})
             }
             const user = await createUser(req.body.firstName, req.body.lastName, username, req.body.email, password)
             return done(null, user)
@@ -104,11 +106,12 @@ passport.use('local-login', new LocalStrategy(
         try {
             const user = await checkExists('username', username);
             if (!user) {
-                return done(null, false)
+                console.log("in auth.ts. Username does not exist")
+                return done(null, false, {message:`The username '${username}' does not exist.`})
             };
             const isMatch = await matchPassword(password, user.password_hash);
             if (!isMatch) {
-                return done(null, false)};
+                return done(null, false, {message: 'Incorrect password provided.'})};
             
             return done(null, 
                 {
