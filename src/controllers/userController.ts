@@ -377,26 +377,27 @@ export const addFriend = async (req: Request, res: Response) => {
         const friendUsername = req.body.username;
         
         // Check if friend username exists
-        const friendResult = await pool.query('SELECT user_id FROM app_user WHERE username = $1', [friendUsername])
+        const friendResult = await pool.query('SELECT user_id, username, first_name, last_name FROM app_user WHERE username = $1', [friendUsername])
         if (friendResult.rows.length < 1) {
             res.status(404).json(`No user with username ${friendUsername} was found`);
             return;
         }
+        const friend = friendResult.rows[0]
         // check friendship does not already exist in db
-        const friendId = friendResult.rows[0].user_id
+        const friendId = friend.user_id
         const checkExisting = await findFriendship(userId, friendId)
         // Return existing record
         if (checkExisting.rows.length > 0) {
-            res.status(200).json(checkExisting.rows[0])
+            res.status(200).json(friend)
             return;
         } 
         const query = 'INSERT INTO friend (friend1_id, friend2_id) VALUES ($1, $2) RETURNING *';
         const ids = [userId, friendId];
         // Always insert id with smaller value as friend1_id
         const values = ids.sort(compareNumbers)
-        const result = await pool.query(query, values);
-        const newFriendship = result.rows[0];
-        res.status(201).json(newFriendship);
+        await pool.query(query, values);
+        
+        res.status(201).json(friend);
         
     } catch (err) {
         console.error('Error in addFriend', err)
