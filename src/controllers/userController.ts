@@ -43,6 +43,13 @@ export const addWish = async (req: Request, res: Response) => {
         const newRestaurantData = await getYelpData(restaurantData);
         // Add restaurant to db if it's not there
         const restaurantId = await addRestaurant(newRestaurantData);
+        // Check that restaurant isn't already on wishlist
+        const wishExists = await pool.query('SELECT * FROM wish WHERE user_id = $1 AND restaurant_id = $2', [userId, restaurantId])
+        if (wishExists.rowCount > 0) {
+            res.status(409).json(`${restaurantData.restaurantName} already exists in your wishlist`)
+            return;
+        }
+
         // Create new wish
         const query = 'INSERT INTO wish (user_id, restaurant_id, restaurant_name, wish_comment, wish_priority) VALUES($1, $2, $3, $4, $5) RETURNING *';
         const values = [userId, restaurantId, restaurantData.restaurantName, wishData.wish_comment, wishData.wish_priority];

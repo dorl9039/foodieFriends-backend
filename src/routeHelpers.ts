@@ -88,6 +88,7 @@ export interface restaurantData {
 
 // API call to Yelp (plugging in restaurant name and address) to get Yelp id
 export const getYelpData = async (data: restaurantData) => {
+    console.log('calling getYelpData')
     const yelpMatchUrl = 'https://api.yelp.com/v3/businesses/matches';
     const yelpByIdUrl = 'https://api.yelp.com/v3/businesses';
     const headers = {
@@ -104,8 +105,8 @@ export const getYelpData = async (data: restaurantData) => {
 
     try {
         const matchResponse: AxiosResponse = await axios.get(yelpMatchUrl, { headers, params:matchParams });
+        // if matchResponse.data.businesses.length == 0 {do something}
         const restaurantId = matchResponse.data.businesses[0].id;
-
         const byIdResponse: AxiosResponse = await axios.get(`${yelpByIdUrl}/${restaurantId}`, {headers});
         const categories = byIdResponse.data.categories.map(obj => obj.title);
         const cuisine = categories.join(', ');
