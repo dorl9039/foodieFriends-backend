@@ -2,6 +2,7 @@ import pool from './db';
 import 'dotenv/config';
 import { Request, Response } from 'express'
 import axios, { AxiosResponse } from 'axios';
+import bcrypt from 'bcryptjs'
 
 export const validateRecord = async (table: string, idType: string, id: string) => {
     if (!Number(id)) {
@@ -42,6 +43,31 @@ export const isAuth = (req: Request, res: Response, next) => {
 
 export const compareNumbers = (a, b) => {
     return a - b
+}
+
+export const checkExists = async (attrType: string, attr: string) => {
+    const result = await pool.query(`SELECT * FROM app_user WHERE ${attrType} = $1`, [attr]);
+
+    if (result.rowCount == 0) return false;
+    return result.rows[0];
+}
+
+export const createUser = async (firstName: string, lastName: string, username: string, email: string, password: string) => {
+    const salt = await bcrypt.genSalt(10);
+    const hashPassword = await bcrypt.hash(password, salt);
+    const creationDate = new Date()
+
+    const query = 'INSERT INTO app_user (username, password_hash, first_name, last_name, email, creation_date) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *';
+    const values = [username, hashPassword, firstName, lastName, email, creationDate];
+
+    const result = await pool.query(query, values);
+    if (result.rowCount == 0) return false;
+    return result.rows[0];
+}
+
+export const matchPassword = async (password: string, hashPassword: string) => {
+    const match = await bcrypt.compare(password, hashPassword);
+    return match
 }
 
 // External API calls

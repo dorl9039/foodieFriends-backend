@@ -1,7 +1,10 @@
 import passport from 'passport';
+import { Strategy as LocalStrategy } from 'passport-local'
 import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
 import 'dotenv/config';
 import pool from './db';
+import { checkExists, createUser, matchPassword } from './routeHelpers' 
+
 
 declare global {
     namespace Express {
@@ -17,7 +20,6 @@ declare global {
         }
     }
 }
-
 
 passport.use(new GoogleStrategy( {
     clientID: process.env.CLIENT_ID,
@@ -68,10 +70,72 @@ passport.use(new GoogleStrategy( {
     })
 );
 
+
+
+passport.use('local-register', new LocalStrategy(
+    {
+        usernameField: 'username',
+        passwordField: 'password',
+        passReqToCallback: true,
+    }, 
+    async (req, username, password, done) => {
+        try {
+            const emailExists = await checkExists('email', req.body.email);
+            const usernameExists = await checkExists('username', username);
+            if (emailExists) {
+                return done(null, false, {message: `The email '${req.body.email}' is already in use.`});
+            } else if (usernameExists) {
+                return done(null, false, {message: `The username '${username}' is already taken.`})
+            }
+            const user = await createUser(req.body.firstName, req.body.lastName, username, req.body.email, password)
+            return done(null, user)
+        } catch (error) {
+            done(error)
+        }
+    }
+    )
+);
+    
+passport.use('local-login', new LocalStrategy(
+    {
+        usernameField: 'username',
+        passwordField: 'password',
+        passReqToCallback: true,
+    },
+    async (req, username, password, done) => {
+        try {
+            const user = await checkExists('username', username);
+            if (!user) {
+                console.log("in auth.ts. Username does not exist")
+                return done(null, false, {message:`The username '${username}' does not exist.`})
+            };
+            const isMatch = await matchPassword(password, user.password_hash);
+            if (!isMatch) {
+                return done(null, false, {message: 'Incorrect password provided.'})};
+            
+            return done(null, 
+                {
+                    userId: user.user_id,
+                    username: user.username,
+                    firstName: user.first_name,
+                    lastName: user.last_name,
+                    email: user.email,
+                    creationDate: user.creation_date,
+                    googleId: null,
+                    needsUsername: false
+                })
+        } catch (error) {
+            return done(error, false)
+        }
+    }
+))
+            
 passport.serializeUser((user, done) => {
+    console.log('in passport.serializeUser. user:', user)
     done(null, user)
     })
 
 passport.deserializeUser((user: Express.User, done) => {
+    console.log('in deserializeUser. user:', user)
     done(null, user)
 })
