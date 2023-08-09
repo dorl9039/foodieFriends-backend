@@ -43,6 +43,13 @@ export const addWish = async (req: Request, res: Response) => {
         const newRestaurantData = await getYelpData(restaurantData);
         // Add restaurant to db if it's not there
         const restaurantId = await addRestaurant(newRestaurantData);
+        // Check that restaurant isn't already on wishlist
+        const wishExists = await pool.query('SELECT * FROM wish WHERE user_id = $1 AND restaurant_id = $2', [userId, restaurantId])
+        if (wishExists.rowCount > 0) {
+            res.status(409).json(`${restaurantData.restaurantName} already exists in your wishlist`)
+            return;
+        }
+
         // Create new wish
         const query = 'INSERT INTO wish (user_id, restaurant_id, restaurant_name, wish_comment, wish_priority) VALUES($1, $2, $3, $4, $5) RETURNING *';
         const values = [userId, restaurantId, restaurantData.restaurantName, wishData.wish_comment, wishData.wish_priority];
@@ -370,26 +377,27 @@ export const addFriend = async (req: Request, res: Response) => {
         const friendUsername = req.body.username;
         
         // Check if friend username exists
-        const friendResult = await pool.query('SELECT user_id FROM app_user WHERE username = $1', [friendUsername])
+        const friendResult = await pool.query('SELECT user_id, username, first_name, last_name FROM app_user WHERE username = $1', [friendUsername])
         if (friendResult.rows.length < 1) {
             res.status(404).json(`No user with username ${friendUsername} was found`);
             return;
         }
+        const friend = friendResult.rows[0]
         // check friendship does not already exist in db
-        const friendId = friendResult.rows[0].user_id
+        const friendId = friend.user_id
         const checkExisting = await findFriendship(userId, friendId)
         // Return existing record
         if (checkExisting.rows.length > 0) {
-            res.status(200).json(checkExisting.rows[0])
+            res.status(200).json(friend)
             return;
         } 
         const query = 'INSERT INTO friend (friend1_id, friend2_id) VALUES ($1, $2) RETURNING *';
         const ids = [userId, friendId];
         // Always insert id with smaller value as friend1_id
         const values = ids.sort(compareNumbers)
-        const result = await pool.query(query, values);
-        const newFriendship = result.rows[0];
-        res.status(201).json(newFriendship);
+        await pool.query(query, values);
+        
+        res.status(201).json(friend);
         
     } catch (err) {
         console.error('Error in addFriend', err)
@@ -458,7 +466,7 @@ export const getFoodieFriends = async (req: Request, res: Response) => {
         }
 
         // get user's wishlist
-        const wishlistResult = await pool.query('SELECT wish.user_id, wish.wish_id, wish.wish_comment, wish.wish_priority, wish.restaurant_id, restaurant.restaurant_name, restaurant.cuisine, restaurant.price_range, restaurant.address_line1, restaurant.address_city, restaurant.address_country FROM wish JOIN restaurant on restaurant.restaurant_id = wish.restaurant_id WHERE wish.user_id = $1', [userId])
+        const wishlistResult = await pool.query('SELECT wish.user_id, wish.wish_id, wish.wish_comment, wish.wish_priority, wish.restaurant_id, restaurant.restaurant_name, restaurant.cuisine, restaurant.price_range, restaurant.address_line1, restaurant.address_city, restaurant.address_state, restaurant.address_country FROM wish JOIN restaurant on restaurant.restaurant_id = wish.restaurant_id WHERE wish.user_id = $1', [userId])
         if (wishlistResult.rows.length < 1) {
             res.status(200).json(null);
             return;
