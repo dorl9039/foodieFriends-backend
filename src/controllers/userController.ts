@@ -83,8 +83,9 @@ export const getHistory = async (req: Request, res: Response) => {
         const history = [];
         for (const record of records) {
             // getAttendees returns an object with two keys: username and user_id
+            const restaurantData = await pool.query('SELECT * FROM restaurant WHERE restaurant_id = $1', [record.restaurant_id])
             const attendees = await getAttendees(record.visit_id);
-            history.push({...record, attendees});
+            history.push({...record, attendees, ...restaurantData.rows[0]});
         }
         res.status(200).json(history);
 
@@ -117,11 +118,15 @@ export const getVisit = async (req: Request, res: Response) => {
         const query = 'SELECT v.visit_id, v.restaurant_id, v.restaurant_name, v.visit_date, a.user_id, a.visit_comment FROM attendee AS a JOIN visit AS v ON v.visit_id = a.visit_id WHERE a.user_id = $1 AND v.visit_id = $2;';
         const values = [userId, visitId];
         const result = await pool.query(query, values);
+
         const record = result.rows[0];
+
+        const restaurantData = await pool.query('SELECT * FROM restaurant WHERE restaurant_id = $1', [record.restaurant_id])
+
         const attendees = await getAttendees(visitId);
-        const vistData = {...record, attendees};
-        
-        res.status(200).json(vistData);
+        const visit = {...record, attendees, ...restaurantData.rows[0]};
+        console.log("in getVisit, visitData:", visit)
+        res.status(200).json(visit);
 
     } catch (err) {
         console.error('Error fetching user history', err.message);
