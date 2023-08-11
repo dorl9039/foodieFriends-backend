@@ -77,3 +77,6 @@ CREATE TABLE friend(
 SELECT app_user.user_id, app_user.username, app_user.first_name, app_user.last_name FROM app_user JOIN friend ON app_user.user_id = friend.friend1_id WHERE friend.friend2_id = 2 
 UNION 
 SELECT app_user.user_id, app_user.username, app_user.first_name, app_user.last_name FROM app_user JOIN friend ON app_user.user_id = friend.friend2_id WHERE friend.friend1_id = 2;
+
+SELECT wish.user_id, wish.wish_id, wish.wish_comment, wish.wish_priority, wish.restaurant_id, restaurant.restaurant_name, restaurant.cuisine, restaurant.price_range, restaurant.address_line1, restaurant.address_city, restaurant.address_country FROM wish 
+JOIN restaurant on restaurant.restaurant_id = wish.restaurant_id WHERE wish.user_id = $1

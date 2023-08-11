@@ -52,7 +52,7 @@ export const addWish = async (req: Request, res: Response) => {
 
         // Create new wish
         const query = 'INSERT INTO wish (user_id, restaurant_id, restaurant_name, wish_comment, wish_priority) VALUES($1, $2, $3, $4, $5) RETURNING *';
-        const values = [userId, restaurantId, restaurantData.restaurantName, wishData.wish_comment, wishData.wish_priority];
+        const values = [userId, restaurantId, restaurantData.restaurantName, wishData.comment, wishData.priority];
         const result = await pool.query(query, values);
         const newWish = result.rows[0];
 
@@ -176,6 +176,7 @@ export const createVisit = async (req: Request, res: Response) => {
         // Check that the userId is valid
         const checkUserId = await validateRecord("app_user", "user_id", userId);
         if (!checkUserId.isValid) {
+            console.log('userId was invalid', userId)
             res.status(checkUserId.status).json(`message: ${checkUserId.message}`);
             return;
         };
@@ -184,25 +185,22 @@ export const createVisit = async (req: Request, res: Response) => {
         const values = [visitData.restaurantId, visitData.restaurantName, visitData.visitDate];
         const result = await pool.query(query, values);
         const newVisit = result.rows[0];
-    
-        for (const user of visitData.attendees) {
+
+        // Insert visit comment for user creating the record
+        await pool.query('INSERT INTO attendee (user_id, visit_id, visit_comment) VALUES($1, $2, $3)', [userId, newVisit.visit_id, visitData.visitComment])
+
+        for (const attendee of visitData.attendees) {
             // Validate attendee is valid app_user
-            const checkAttendeeUserId = await validateRecord("app_user", "user_id", user.user_id);
+            const checkAttendeeUserId = await validateRecord("app_user", "user_id", attendee.user_id);
             if (!checkAttendeeUserId.isValid) {
+                console.log('Attendee id was invalid', attendee.user_id)
                 res.status(checkAttendeeUserId.status).json(`message: ${checkAttendeeUserId.message}`);
                 return;
             };
             // Create attendee record for each visit attendee
-            let attendeeQuery: string;
-            let attendeeValues: Array<string>;
-            // Insert visit comment for user creating the record
-            if (user.user_id == userId) {
-                attendeeQuery = 'INSERT INTO attendee (user_id, visit_id, visit_comment) VALUES($1, $2, $3)';
-                attendeeValues = [user.user_id, newVisit.visit_id, visitData.visitComment];
-            } else {        
-                attendeeQuery = 'INSERT INTO attendee (user_id, visit_id) VALUES($1, $2)';
-                attendeeValues = [user.user_id, newVisit.visit_id];
-            };
+            const attendeeQuery = 'INSERT INTO attendee (user_id, visit_id) VALUES($1, $2)';
+            const attendeeValues = [attendee.user_id, newVisit.visit_id];
+
             try {
                 await pool.query(attendeeQuery, attendeeValues);
             } catch (err) {
