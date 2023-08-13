@@ -115,7 +115,8 @@ export const getYelpData = async (data: restaurantData) => {
             id: matchResponse.data.businesses[0].id,
             ...data,
             cuisine: cuisine,
-            priceRange: byIdResponse.data.price
+            priceRange: byIdResponse.data.price,
+            photo: byIdResponse.data.image_url,
         };
         return restaurantData;
 
@@ -130,7 +131,7 @@ export const addRestaurant = async (restaurantData:restaurantData) => {
     const isValid = result.rows.length < 1 ? false: true;
 
     if (!isValid) {
-        const query = 'INSERT INTO restaurant(restaurant_id, restaurant_name, address_line1, address_city, address_state, address_country, longitude, latitude, cuisine, price_range) VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)';
+        const query = 'INSERT INTO restaurant(restaurant_id, restaurant_name, address_line1, address_city, address_state, address_country, longitude, latitude, cuisine, price_range, photo) VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)';
         const values = Object.values(restaurantData);
         await pool.query(query, values);
     }
