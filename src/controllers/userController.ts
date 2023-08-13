@@ -1,7 +1,7 @@
 import e, { Request, Response } from 'express';
 import pool from '../db';
-import { validateRecord, getYelpData, addRestaurant, getAttendees, compareNumbers, findFriendship } from '../routeHelpers';
-
+import { validateRecord, getYelpData, addRestaurant, getAttendees, compareNumbers, findFriendship, matchPassword } from '../routeHelpers';
+import bcrypt from 'bcryptjs';
 
 // Display list of wishes for a user
 export const getWishlist = async (req: Request, res: Response) => {
@@ -75,7 +75,7 @@ export const getHistory = async (req: Request, res: Response) => {
             return;
         }
         // get list of attendee records
-        const query = 'SELECT v.visit_id, v.restaurant_id, v.restaurant_name, v.visit_date, a.user_id, a.visit_comment FROM attendee AS a JOIN visit AS v ON v.visit_id = a.visit_id WHERE a.user_id = $1;';
+        const query = 'SELECT v.visit_id, v.restaurant_id, v.restaurant_name, v.visit_date, a.visit_comment, a.rating FROM attendee AS a JOIN visit AS v ON v.visit_id = a.visit_id WHERE a.user_id = $1;';
         const values = [userId];
         const result = await pool.query(query, values);
         const records = result.rows;
@@ -115,7 +115,7 @@ export const getVisit = async (req: Request, res: Response) => {
         }
 
         // get visit record
-        const query = 'SELECT v.visit_id, v.restaurant_id, v.restaurant_name, v.visit_date, a.user_id, a.visit_comment FROM attendee AS a JOIN visit AS v ON v.visit_id = a.visit_id WHERE a.user_id = $1 AND v.visit_id = $2;';
+        const query = 'SELECT v.visit_id, v.restaurant_id, v.restaurant_name, v.visit_date, a.visit_comment, a.rating FROM attendee AS a JOIN visit AS v ON v.visit_id = a.visit_id WHERE a.user_id = $1 AND v.visit_id = $2;';
         const values = [userId, visitId];
         const result = await pool.query(query, values);
 
@@ -192,7 +192,7 @@ export const createVisit = async (req: Request, res: Response) => {
         const newVisit = result.rows[0];
 
         // Insert visit comment for user creating the record
-        await pool.query('INSERT INTO attendee (user_id, visit_id, visit_comment) VALUES($1, $2, $3)', [userId, newVisit.visit_id, visitData.visitComment])
+        await pool.query('INSERT INTO attendee (user_id, visit_id, visit_comment, rating) VALUES($1, $2, $3, $4)', [userId, newVisit.visit_id, visitData.visitComment, visitData.rating])
 
         for (const attendee of visitData.attendees) {
             // Validate attendee is valid app_user
@@ -216,7 +216,7 @@ export const createVisit = async (req: Request, res: Response) => {
             ...newVisit,
             user_id: userId,
             visit_comment: visitData.visitComment,
-            attendees: visitData.attendees
+            attendees: visitData.attendees,
         };  
         res.status(201).json(newVisitRecord);
 
@@ -225,7 +225,7 @@ export const createVisit = async (req: Request, res: Response) => {
     };
 }
 
-//Params: userId, visitId. Req.body: visit_comment
+//Params: userId, visitId. Req.body: visit_comment, rating
 export const editAttendeeComment = async (req: Request, res: Response) => {
     try {
         const attendeeRecord = req.body;
@@ -254,11 +254,12 @@ export const editAttendeeComment = async (req: Request, res: Response) => {
             return;
         }
         //Update attendee record
-        let query = 'UPDATE attendee SET visit_comment = $1 WHERE visit_id = $2 and user_id = $3 RETURNING *';
-        const values = [attendeeRecord.visit_comment, visitId, userId];
+        const query = 'UPDATE attendee SET visit_comment = $1, rating = $2 WHERE visit_id = $3 and user_id = $4 RETURNING *';
+        const values = [attendeeRecord.visit_comment, attendeeRecord.rating, visitId, userId];
         
         const result = await pool.query(query, values);
         const updatedAttendeeRecord = result.rows[0];
+        console.log('in editAttendeeComment, updatedAttendeeRecord', updatedAttendeeRecord)
         res.status(200).json(updatedAttendeeRecord);
 
     } catch (err) {
@@ -335,6 +336,33 @@ export const getUsername = async (req: Request, res: Response) => {
     } catch (err) {
         console.error('Error in getUsername', err)
     }   
+}
+
+export const changePassword = async (req: Request, res: Response) => {
+    try {
+        //Validate user in db
+        const userId = req.params.userId;
+        const userResult = await pool.query('SELECT * FROM app_user WHERE user_id = $1', [userId])
+        if (userResult.rowCount === 0) return false;
+        const user = userResult.rows[0]
+
+        const {oldPassword, newPassword} = req.body
+        console.log('in changePassword, oldPassword and newPassword:', oldPassword, newPassword)
+        const isMatch = await matchPassword(oldPassword, user.password_hash);
+        if (!isMatch) {
+            res.status(401).json({message:'Incorrect password provided'});
+            return;
+        }
+        const salt = await bcrypt.genSalt(10);
+        const hashNewPassword = await bcrypt.hash(newPassword, salt);
+        const query = 'UPDATE app_user SET password_hash = $1 WHERE user_id = $2 RETURNING *'
+        const values = [hashNewPassword, userId]
+        const result = await pool.query(query, values)
+        res.status(200).json(result.rows[0])
+
+    } catch (err) {
+        console.error("Error in changePassword", err)
+    }
 }
 
 // Param: userId. req.body: object {username: ''}

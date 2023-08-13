@@ -15,6 +15,7 @@ router.patch('/:userId/history/:visitId/attendees', userController.editVisitAtte
 
 router.patch('/:userId/username', userController.editUsername);
 router.get('/:userId/username', userController.getUsername);
+router.patch('/:userId/password', userController.changePassword); 
 
 router.post('/:userId/friends', userController.addFriend);
 router.delete('/:userId/friends/:friendId', userController.deleteFriend)
