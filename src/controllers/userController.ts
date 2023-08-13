@@ -13,12 +13,31 @@ export const getWishlist = async (req: Request, res: Response) => {
             res.status(checkUserId.status).json(`message: ${checkUserId.message}`);
             return;
         }
-
-        const query = 'SELECT * FROM wish WHERE user_id = $1';
-        const values = [userId];
-        const result = await pool.query(query, values);
-        const wishlist = result.rows;
-        
+        // Get all data related to wish restaurant for user's wishlist
+        const wishlistResult = await pool.query('SELECT wish.user_id, wish.wish_id, wish.wish_comment, wish.wish_priority, wish.restaurant_id, restaurant.restaurant_name, restaurant.cuisine, restaurant.price_range, restaurant.address_line1, restaurant.address_city, restaurant.address_state, restaurant.address_country, restaurant.latitude, restaurant.longitude, restaurant.photo FROM wish JOIN restaurant on restaurant.restaurant_id = wish.restaurant_id WHERE wish.user_id = $1', [userId])
+        if (wishlistResult.rows.length < 1) {
+            res.status(200).json({message:'No wishes found'});
+            return;
+        }
+        const wishlist = wishlistResult.rows
+        // get list of all friends
+        const friendsResult = await pool.query('SELECT app_user.user_id, app_user.username, app_user.first_name, app_user.last_name FROM app_user JOIN friend ON app_user.user_id = friend.friend1_id WHERE friend.friend2_id = $1 UNION SELECT app_user.user_id, app_user.username, app_user.first_name, app_user.last_name FROM app_user JOIN friend ON app_user.user_id = friend.friend2_id WHERE friend.friend1_id = $1', [userId])
+        // If user has no friends
+        if (friendsResult.rows.length < 1) {
+            res.status(200).json({message: 'No friends found'});
+            return;
+        } 
+        // for each wish, look through each friend's wishlist for a match
+        for (const wish of wishlist) {
+            wish.foodieFriends = [];
+            for (const friend of friendsResult.rows) {
+                const friendWishlist = await pool.query('SELECT restaurant_id FROM wish WHERE user_id = $1', [friend.user_id])
+                const restaurants = friendWishlist.rows.map(friendWish => friendWish.restaurant_id)
+                if (restaurants.includes(wish.restaurant_id)) {
+                    wish.foodieFriends.push(friend)
+                }
+            }
+        }
         res.status(200).json(wishlist);
 
     } catch (err) {
@@ -497,12 +516,12 @@ export const getFoodieFriends = async (req: Request, res: Response) => {
         }
 
         // get user's wishlist
-        const wishlistResult = await pool.query('SELECT wish.user_id, wish.wish_id, wish.wish_comment, wish.wish_priority, wish.restaurant_id, restaurant.restaurant_name, restaurant.cuisine, restaurant.price_range, restaurant.address_line1, restaurant.address_city, restaurant.address_state, restaurant.address_country FROM wish JOIN restaurant on restaurant.restaurant_id = wish.restaurant_id WHERE wish.user_id = $1', [userId])
+        const wishlistResult = await pool.query('SELECT restaurant_id FROM wish WHERE wish.user_id = $1', [userId])
         if (wishlistResult.rows.length < 1) {
             res.status(200).json(null);
             return;
         }
-
+        console.log('wishlistResult.rows,', wishlistResult.rows)
         // get list of all friends
         const friendsResult = await pool.query('SELECT app_user.user_id, app_user.username, app_user.first_name, app_user.last_name, app_user.email FROM app_user JOIN friend ON app_user.user_id = friend.friend1_id WHERE friend.friend2_id = $1 UNION SELECT app_user.user_id, app_user.username, app_user.first_name, app_user.last_name, app_user.email FROM app_user JOIN friend ON app_user.user_id = friend.friend2_id WHERE friend.friend1_id = $1', [userId])
         // If user has no friends
@@ -518,7 +537,7 @@ export const getFoodieFriends = async (req: Request, res: Response) => {
                 const friendWishlist = await pool.query('SELECT restaurant_id FROM wish WHERE user_id = $1', [friend.user_id])
                 const restaurants = friendWishlist.rows.map(friendWish => friendWish.restaurant_id)
                 if (restaurants.includes(wish.restaurant_id)) {
-                    foodieFriends.push({friend, wishRestaurant:wish})
+                    foodieFriends.push({...friend, restaurantId:wish.restaurant_id})
                 }
             }
         }
