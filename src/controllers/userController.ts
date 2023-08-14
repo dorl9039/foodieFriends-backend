@@ -104,7 +104,8 @@ export const getHistory = async (req: Request, res: Response) => {
             // getAttendees returns an object with two keys: username and user_id
             const restaurantData = await pool.query('SELECT * FROM restaurant WHERE restaurant_id = $1', [record.restaurant_id])
             const attendees = await getAttendees(record.visit_id);
-            history.push({...record, attendees, ...restaurantData.rows[0]});
+            const friendAttendees = attendees.filter(attendee => attendee.user_id !== parseInt(userId, 10))
+            history.push({...record, friendAttendees, ...restaurantData.rows[0]});
         }
         res.status(200).json(history);
 
