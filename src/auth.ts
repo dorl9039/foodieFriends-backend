@@ -88,7 +88,16 @@ passport.use('local-register', new LocalStrategy(
                 return done(null, false, {message: `The username '${username}' is already taken.`})
             }
             const user = await createUser(req.body.firstName, req.body.lastName, username, req.body.email, password)
-            return done(null, user)
+            return done(null, {
+                userId: user.user_id,
+                username: user.username,
+                firstName: user.first_name,
+                lastName: user.last_name,
+                email: user.email,
+                creationDate: user.creation_date,
+                googleId: null,
+                needsUsername: false
+            })
         } catch (error) {
             done(error)
         }

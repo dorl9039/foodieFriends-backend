@@ -22,11 +22,11 @@ export const getWishlist = async (req: Request, res: Response) => {
         const wishlist = wishlistResult.rows
         // get list of all friends
         const friendsResult = await pool.query('SELECT app_user.user_id, app_user.username, app_user.first_name, app_user.last_name, app_user.email FROM app_user JOIN friend ON app_user.user_id = friend.friend1_id WHERE friend.friend2_id = $1 UNION SELECT app_user.user_id, app_user.username, app_user.first_name, app_user.last_name, app_user.email FROM app_user JOIN friend ON app_user.user_id = friend.friend2_id WHERE friend.friend1_id = $1', [userId])
-        // If user has no friends
-        if (friendsResult.rows.length < 1) {
-            res.status(200).json({message: 'No friends found'});
-            return;
-        } 
+        // // If user has no friends
+        // if (friendsResult.rows.length < 1) {
+        //     res.status(200).json({message: 'No friends found'});
+        //     return;
+        // } 
         // for each wish, look through each friend's wishlist for a match
         for (const wish of wishlist) {
             wish.foodieFriends = [];
