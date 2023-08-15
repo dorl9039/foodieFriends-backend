@@ -27,7 +27,8 @@ CREATE TABLE restaurant(
     longitude DOUBLE PRECISION,
     latitude DOUBLE PRECISION,
     cuisine TEXT,
-    price_range VARCHAR(8)
+    price_range VARCHAR(8),
+    photo TEXT
 );
 
 create TABLE wish(
@@ -42,13 +43,14 @@ create TABLE wish(
 CREATE TABLE attendee(
     user_id INT,
     visit_id INT,
-    visit_comment TEXT
+    visit_comment TEXT,
+    rating NUMERIC CONSTRAINT valid_rating CHECK (rating >= 0 AND rating <= 5)
 );
 
 INSERT INTO attendee (user_id, visit_id, visit_comment) VALUES (1, 1, 'testaccount visit to Cloud & Spirits')
 INSERT INTO attendee (user_id, visit_id, visit_comment) VALUES (1, 2, 'cloud & spirits visit')
 INSERT INTO attendee (user_id, visit_id, visit_comment) VALUES (2, 1, 'user2 visit to Noreetuh')
-
+ALTER TABLE attendee ADD rating NUMERIC CONSTRAINT valid_rating CHECK (rating >= 0 AND rating <= 5);
 
 CREATE TABLE visit (
     visit_id SERIAL PRIMARY KEY,
