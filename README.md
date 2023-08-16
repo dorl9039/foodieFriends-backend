@@ -4,7 +4,7 @@ FoodieFriends is a social media and lifestyle web application for tracking resta
 
 A user can add and organize the restaurants they want to try out, mark a restaurant as visited with friends, and add rankings and comments to each wish or visit record. A friend who has the same restaurant on their wishlist will show up as a suggested FoodieFriend, so it's easy for users to find company for trying out new restaurants!
 
-This app was created using a PERN (with Typescript) techstack.
+This app was created using a PERN (with Typescript) techstack with REST API routes.
 
 ## Dependencies
 This project uses Typescript, as well as the following Node.js libraries:
