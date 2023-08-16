@@ -29,12 +29,12 @@ This project uses Typescript, as well as the following Node.js libraries:
 3. Start up Postgres, e.g., by running `psql -U postgres`
     * Follow the list of commands in `database.sql` within this repo to create a database with the appropriate tables
 4. Set up a .env file with the following:
-    * YELP_API_TOKEN (Your Yelp API token)
-    * CLIENT_URL (URL for frontend)
-    * CLIENT_ID (Client ID from Google OAuth2.0)
-    * CLIENT_SECRET (Client Secret from Google OAuth2.0)
-    * COOKIE_SECRET (Randomly generated, very long string of characters)
-    * GOOGLE_CALLBACK_URL ([your backend URL]/auth/google/callback)
+    * `YELP_API_TOKEN` (Your Yelp API token)
+    * `CLIENT_URL` (URL for frontend)
+    * `CLIENT_ID` (Client ID from Google OAuth2.0)
+    * `CLIENT_SECRET` (Client Secret from Google OAuth2.0)
+    * `COOKIE_SECRET` (Randomly generated, very long string of characters)
+    * `GOOGLE_CALLBACK_URL` ([your backend URL]/auth/google/callback)
 6. Start the server by running `node dist/app.js`
 
 
