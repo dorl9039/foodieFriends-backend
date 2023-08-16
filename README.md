@@ -35,6 +35,7 @@ This project uses Typescript, as well as the following Node.js libraries:
     * `CLIENT_SECRET` (Client Secret from Google OAuth2.0)
     * `COOKIE_SECRET` (Randomly generated, very long string of characters)
     * `GOOGLE_CALLBACK_URL` ([your backend URL]/auth/google/callback)
+5. Compile the .ts files by running `npm run tsc`
 6. Start the server by running `node dist/app.js`
 
 
