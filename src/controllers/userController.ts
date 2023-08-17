@@ -287,10 +287,10 @@ export const editAttendeeComment = async (req: Request, res: Response) => {
     }
 }
 
-//Params: userId, visitId. Req.body: username of attendee
+//Params: userId, visitId. Req.body: array of user objects (includes username and user_id)
 export const editVisitAttendees = async (req: Request, res: Response) => {
         try { 
-            const newAttendee = req.body;
+            const attendees = req.body;
             //Validate user in db
             const userId = req.params.userId;
             const checkUserId = await validateRecord("app_user", "user_id", userId);
@@ -308,33 +308,24 @@ export const editVisitAttendees = async (req: Request, res: Response) => {
             };
 
             //Validate user was an attendee of visit and get list of all visit attendees
-            const attendees = await getAttendees(visitId);
-            if (attendees.length < 1) {
+            const visitAttendees = await getAttendees(visitId);
+            if (visitAttendees.length < 1) {
                 res.status(404).json(`user with id ${userId} was not an attendee for visit ${visitId}`);
                 return;
-            }
-            
-            const oldAttendeesUsernames = attendees.map(user => user.username);
-            if (!oldAttendeesUsernames.includes(newAttendee.username)) {
-                // Get attendee's id
-                const attendeeIdQuery = 'SELECT user_id FROM app_user WHERE username = $1';
-                const attendeeIdValues = [newAttendee.username];
-                const attendeeIdresult = await pool.query(attendeeIdQuery, attendeeIdValues);
-                const newAttendeeId = attendeeIdresult.rows[0].user_id;
+            }  
+
+            const newAttendees = []
+            const oldAttendeesIds = visitAttendees.map(user => user.user_id);
+            for (const attendee of attendees) {
+                if (!oldAttendeesIds.includes(attendee.user_id)) {
 
                 // create new attendee record
-                const newAttendeeQuery = 'INSERT INTO attendee (visit_id, user_id) VALUES ($1, $2)';
-                const newAttendeeValues = [visitId, newAttendeeId];
-                await pool.query(newAttendeeQuery, newAttendeeValues);
-                attendees.push({username: newAttendee.username, user_id: newAttendeeId});
+                await pool.query('INSERT INTO attendee (visit_id, user_id) VALUES ($1, $2)', [visitId, attendee.user_id]);
+                newAttendees.push({user_id: attendee.user_id, username: attendee.username}) 
             }
-
-            const updatedQuery = 'SELECT v.visit_id, v.restaurant_id, v.restaurant_name, v.visit_date, a.user_id, a.visit_comment FROM attendee AS a JOIN visit AS v ON v.visit_id = a.visit_id WHERE a.user_id = $1 AND v.visit_id = $2;';
-            const updatedValues = [userId, visitId];
-            const updatedResult = await pool.query(updatedQuery, updatedValues);
-            const updatedRecord = updatedResult.rows[0];
-            const updatedVisitRecord = {...updatedRecord, attendees};
-            res.status(200).json(updatedVisitRecord);
+            }
+            
+            res.status(200).json([...visitAttendees, ...newAttendees]);
 
         } catch (err) {
             console.error("Error editing visit attendees", err);
