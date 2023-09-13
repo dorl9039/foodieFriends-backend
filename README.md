@@ -6,6 +6,8 @@ A user can add and organize the restaurants they want to try out, mark a restaur
 
 This app was created using a PERN (with Typescript) techstack with REST API routes.
 
+**[FoodieFriends frontend repo](https://github.com/dorl9039/foodieFriends-frontend)**
+
 ## Dependencies
 This project uses Typescript, as well as the following Node.js libraries:
 * [pg](https://www.npmjs.com/package/pg) (for connecting to the Postgres database)
